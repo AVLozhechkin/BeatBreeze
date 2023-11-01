@@ -26,4 +26,8 @@
     <ProjectReference Include="..\CloudMusicPlayer.Infrastructure\CloudMusicPlayer.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
 </Project>

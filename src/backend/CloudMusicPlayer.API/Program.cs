@@ -80,14 +80,6 @@ var app = builder.Build();
 
 app.UseResponseCompression();
 
-
-app.Use(async (ctx, next) =>
-{
-    Console.WriteLine(ctx.Request.QueryString.ToString());
-
-    await next.Invoke(ctx);
-});
-
 app.UseAuthentication();
 app.UseAuthorization();
 
