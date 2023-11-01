@@ -1,0 +1,51 @@
+<div class="fixed bottom-0 left-0 w-full text-white mat-app-background">
+  <!--Progress bar-->
+  <div class="w-full h-2 bg-gray-500 relative cursor-pointer" (click)="setSeek($event)">
+    <span class="block h-2 bg-white" [style]="{ width: this.playerService.songProgress() }"></span>
+  </div>
+  <div class="flex justify-between w-full px-1 pt-2">
+    <span>{{this.playerService.seek()}}</span>
+    <span>{{this.playerService.songDuration()}}</span>
+  </div>
+
+  <div class="flex items-center p-3">
+    <span class="w-1/4 text-lime-300">
+      <ng-container *ngIf="this.playerService.song(); else defaultSongDescription">
+        {{this.playerService.song()?.name}}
+      </ng-container>
+      <ng-template #defaultSongDescription>SongModel by artist</ng-template>
+    </span>
+
+    <!--Buttons-->
+    <div class="text-center w-1/2 flex justify-center items-center select-none gap-x-8">
+      <fa-icon class="text-4xl" [icon]="faBackwardStep" (click)="this.playPrevious()"></fa-icon>
+      <ng-container *ngIf="this.playerService.playState() === 'playing'; else paused">
+        <fa-icon class="text-5xl" [icon]="faCirclePause" (click)="pause()"></fa-icon>
+      </ng-container>
+      <ng-template #paused>
+        <fa-icon class="text-5xl" [icon]="faCirclePlay" (click)="play()"></fa-icon>
+      </ng-template>
+      <fa-icon class="text-4xl" [icon]="faForwardStep" (click)="this.playNext()"></fa-icon>
+    </div>
+
+    <div class="text-center w-1/4 flex justify-around items-center text-2xl space-x-4 select-none">
+      <div [ngSwitch]="playerService.repeatType()">
+        <ng-template [ngSwitchCase]="'repeat-1'">
+          <button mat-button (click)="setRepeat('repeat-none')"> repeat one </button>
+        </ng-template>
+        <ng-template [ngSwitchCase]="'repeat-none'">
+          <button mat-button (click)="setRepeat('repeat-all')"> repeat none </button>
+        </ng-template>
+        <ng-template [ngSwitchCase]="'repeat-all'">
+          <button mat-button (click)="setRepeat('repeat-1')"> repeat all </button>
+        </ng-template>
+      </div>
+      <fa-icon class="text-4xl" [icon]="faRepeat"></fa-icon>
+      <fa-icon class="text-4xl" [icon]="faShuffle"></fa-icon>
+      <fa-icon class="text-4xl" [icon]="faVolumeHigh"></fa-icon>
+      <mat-slider min="0" max="1" step="0.01">
+        <input matSliderThumb type="number" [(ngModel)]="this.currentVolume">
+      </mat-slider>
+    </div>
+  </div>
+</div>

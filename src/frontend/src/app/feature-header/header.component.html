@@ -1,0 +1,16 @@
+<nav class="flex justify-between p-3">
+  <ng-container *ngIf="this.authService.isAuthenticated(); else nonAuthenticated">
+      <a class="text-xl p-3 flex items-center" routerLink="home">CloudMusicPlayer</a>
+      <button mat-flat-button class="m-3" routerLink="providers">Library</button>
+      <button mat-flat-button class="m-3" routerLink="playlists">Playlists</button>
+      <button mat-flat-button class="m-3" routerLink="queue">Queue</button>
+      <button mat-flat-button class="m-3" color="primary" (click)="signOut()">Sign out</button>
+  </ng-container>
+  <ng-template #nonAuthenticated>
+    <a class="text-xl p-3 flex items-center" routerLink="">CloudMusicPlayer</a>
+    <div>
+      <button mat-flat-button color="primary" class="m-3" routerLink="login">Log In</button>
+      <button mat-flat-button color="accent" class="m-3" routerLink="signup">Sign Up</button>
+    </div>
+  </ng-template>
+</nav>

@@ -1,0 +1,12 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CloudMusicPlayer.Core.Models;
+
+public record History
+{
+    [Key]
+    public Guid Id { get; init; }
+    public Guid UserId { get; init; }
+    public User User { get; init; } = null!;
+    public ICollection<HistoryItem> HistoryItems { get; init; } = null!;
+}

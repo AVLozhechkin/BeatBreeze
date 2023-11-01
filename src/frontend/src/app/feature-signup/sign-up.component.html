@@ -1,0 +1,24 @@
+<div class="container mx-auto flex justify-center pt-10">
+  <form [formGroup]="signUpFormGroup" class="w-1/2 flex justify-center flex-col gap-y-5">
+    <!--Email-->
+    <mat-form-field>
+      <mat-label>Email</mat-label>
+      <input type="email" matInput formControlName="email"
+             placeholder="Ex. pat@example.com">
+    </mat-form-field>
+    <!--Password-->
+    <mat-form-field>
+      <mat-label>Password</mat-label>
+      <input type="password" matInput formControlName="password"
+             placeholder="Password">
+    </mat-form-field>
+    <!--Password confirmation-->
+    <mat-form-field>
+      <mat-label>Password confirmation</mat-label>
+      <input type="password" matInput formControlName="passwordConfirmation"
+             placeholder="Confirm your password">
+    </mat-form-field>
+    <!--Log in button-->
+    <button mat-flat-button color="primary" (click)="submit()">Sign Up</button>
+  </form>
+</div>

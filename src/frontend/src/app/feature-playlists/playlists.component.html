@@ -1,0 +1,50 @@
+<ng-container *ngIf="this.playlistService.isLoading(); else loaded">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+</ng-container>
+<ng-template #loaded>
+  <div class="container mx-auto flex flex-col justify-center pt-10">
+    <div>
+      <button mat-flat-button color="primary" (click)="createNewPlaylist()">Create new playlist</button>
+    </div>
+    <table mat-table [dataSource]="this.playlistService.playlists()" class="mat-elevation-z8">
+
+      <!-- Position Column -->
+      <ng-container matColumnDef="position">
+        <th mat-header-cell *matHeaderCellDef> # </th>
+        <td mat-cell *matCellDef="let i = index"> {{ i + 1 }}</td>
+      </ng-container>
+
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef> Name </th>
+        <td mat-cell *matCellDef="let playlist"> {{playlist.name}} </td>
+      </ng-container>
+
+      <!-- UpdatedAt Column -->
+      <ng-container matColumnDef="updatedAt">
+        <th mat-header-cell *matHeaderCellDef> Updated At </th>
+        <td mat-cell *matCellDef="let playlist"> {{playlist.updatedAt | date:'short'}} </td>
+      </ng-container>
+
+      <!-- Size Column -->
+      <ng-container matColumnDef="size">
+        <th mat-header-cell *matHeaderCellDef> Size </th>
+        <td mat-cell *matCellDef="let playlist">0</td>
+      </ng-container>
+
+      <!-- Buttons Column -->
+      <ng-container matColumnDef="buttons">
+        <th mat-header-cell *matHeaderCellDef> Manage </th>
+        <td mat-cell *matCellDef="let playlist">
+          <button mat-flat-button color="primary" [routerLink]="playlist.id">View</button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+    </table>
+  </div>
+</ng-template>
+
+
+
