@@ -4,8 +4,8 @@ import {MatTableModule} from "@angular/material/table";
 import {MatButtonModule} from "@angular/material/button";
 import {RouterLink} from "@angular/router";
 import {MatProgressBarModule} from "@angular/material/progress-bar";
-import {ProvidersService} from "../shared/services/providers.service";
 import {ProviderTypes} from "../shared/models/provider-types.model";
+import {ProvidersService} from "./providers.service";
 
 @Component({
   selector: 'cmp-providers',
@@ -20,10 +20,7 @@ export class ProvidersComponent implements OnInit{
   constructor() {}
 
   ngOnInit(): void {
-    if (!this.providersService.isInitialized())
-    {
-      this.providersService.fetchProviders()
-    }
+    this.providersService.fetchProviders()
   }
 
   updateProvider(providerId: string) {
@@ -34,7 +31,7 @@ export class ProvidersComponent implements OnInit{
     this.providersService.removeProvider(providerId)
   }
 
-  addYandex(providerType: ProviderTypes) {
+  addProvider(providerType: ProviderTypes) {
     this.providersService.addProvider(providerType)
   }
 }

@@ -8,5 +8,5 @@ export interface DataProvider {
   providerType: ProviderTypes,
   connectedAt: Date,
   updatedAt: Date,
-  songFiles: Song[]
+  songFiles: Song[] | undefined
 }

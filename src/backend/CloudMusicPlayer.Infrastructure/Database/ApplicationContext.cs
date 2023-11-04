@@ -27,16 +27,18 @@ public sealed class ApplicationContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder?.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-        modelBuilder?.Entity<DataProvider>()
+        modelBuilder.Entity<DataProvider>().OwnsOne(dp => dp.AccessToken);
+
+        modelBuilder.Entity<DataProvider>()
             .Property(dp => dp.ProviderType)
             .HasConversion<string>();
 
-        modelBuilder?.Entity<DataProvider>()
+        modelBuilder.Entity<DataProvider>()
             .HasIndex(dp => new { ProviderId = dp.ProviderType, dp.Name, dp.UserId }).IsUnique();
 
-        modelBuilder?.Entity<PlaylistItem>()
+        modelBuilder.Entity<PlaylistItem>()
             .HasIndex(pi => new { ProviderId = pi.SongFileId, pi.PlaylistId }).IsUnique();
     }
 

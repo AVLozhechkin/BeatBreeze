@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,7 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTreeModule } from '@angular/material/tree';
 import { RouterLink } from '@angular/router';
-import { PlaylistsService } from '../shared/services/playlists.service';
+import {CreatePlaylistPanelComponent} from "./create-playlist-panel/create-playlist-panel.component";
+import {PlaylistsService} from "../shared/services/playlists.service";
 
 @Component({
   selector: 'cmp-playlists',
@@ -19,14 +20,16 @@ import { PlaylistsService } from '../shared/services/playlists.service';
     MatProgressBarModule,
     MatTreeModule,
     RouterLink,
+    CreatePlaylistPanelComponent,
   ],
   templateUrl: './playlists.component.html',
 })
-export class PlaylistsComponent {
+export class PlaylistsComponent implements OnInit
+{
   playlistService = inject(PlaylistsService);
   columns = ['position', 'name', 'updatedAt', 'size', 'buttons'];
 
-  createNewPlaylist() {
-    this.playlistService.createPlaylist();
+  ngOnInit(): void {
+    this.playlistService.fetchPlaylists()
   }
 }

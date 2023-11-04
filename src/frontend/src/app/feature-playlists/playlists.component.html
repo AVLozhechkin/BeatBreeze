@@ -3,10 +3,8 @@
 </ng-container>
 <ng-template #loaded>
   <div class="container mx-auto flex flex-col justify-center pt-10">
-    <div>
-      <button mat-flat-button color="primary" (click)="createNewPlaylist()">Create new playlist</button>
-    </div>
-    <table mat-table [dataSource]="this.playlistService.playlists()" class="mat-elevation-z8">
+    <cmp-create-playlist-panel></cmp-create-playlist-panel>
+    <table mat-table [dataSource]="this.playlistService.playlists()!" class="mat-elevation-z8">
 
       <!-- Position Column -->
       <ng-container matColumnDef="position">

@@ -12,11 +12,10 @@ public record DataProvider
     public Guid UserId { get; init; }
     public ProviderTypes ProviderType { get; init; }
     public string Name { get; init; } = string.Empty;
-    public string ApiToken { get; init; } = string.Empty;
-    public string? RefreshToken { get; init; }
-    public DateTimeOffset ExpiresAt { get; init; }
-    public DateTimeOffset ConnectedAt { get; init; }
+    public DateTimeOffset AddedAt { get; init; }
     public DateTimeOffset UpdatedAt { get; set; }
+    public AccessToken AccessToken { get; set; } = null!;
+    public string RefreshToken { get; init; } = string.Empty;
     public ICollection<SongFile> SongFiles { get; init; } = null!;
 
     public static Result<DataProvider> Create(
@@ -44,11 +43,10 @@ public record DataProvider
             UserId = userId,
             ProviderType = providerType,
             Name = name,
-            ConnectedAt = currentDate,
+            AddedAt = currentDate,
             UpdatedAt = currentDate,
-            ApiToken = apiToken,
+            AccessToken = new AccessToken { Token = apiToken, ExpiresAt = expires},
             RefreshToken = refreshToken,
-            ExpiresAt = expires
         };
 
         return Result.Success(provider);

@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace CloudMusicPlayer.API.Services;
 
-public class AuthService
+public sealed class AuthService
 {
     private readonly IPasswordHasher<User> _hasher;
     private readonly UserService _userService;

@@ -43,8 +43,11 @@ export class QueueService {
   }
 
   public addToQueue(source: DataProvider | Playlist) {
-    this._queue.set(source.songFiles)
-    this._currentSongIndex.set(0)
+    if (source.songFiles)
+    {
+      this._queue.set(source.songFiles)
+      this._currentSongIndex.set(0)
+    }
   }
 
   public addSongToQueue(source: Song) {

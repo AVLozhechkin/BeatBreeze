@@ -10,8 +10,8 @@ import {FlatTreeControl} from "@angular/cdk/tree";
 import {MatProgressBarModule} from "@angular/material/progress-bar";
 import {MatMenuModule} from "@angular/material/menu";
 import {PlaylistsService} from "../shared/services/playlists.service";
-import {ProvidersService} from "../shared/services/providers.service";
 import {PlayerService} from "../shared/services/player.service";
+import {ProviderService} from "./provider.service";
 
 @Component({
   selector: 'cmp-provider',
@@ -20,7 +20,7 @@ import {PlayerService} from "../shared/services/player.service";
   templateUrl: './provider.component.html'
 })
 export class ProviderComponent implements OnInit {
-  protected readonly providersService = inject(ProvidersService)
+  protected readonly providerService = inject(ProviderService)
   protected readonly playerService = inject(PlayerService)
   protected readonly playlistsService = inject(PlaylistsService);
 
@@ -78,10 +78,7 @@ export class ProviderComponent implements OnInit {
 
     this.providerId = id!;
 
-    if (!this.providersService.isInitialized())
-    {
-      this.providersService.fetchProviders()
-    }
+    this.providerService.fetchProvider(this.providerId)
   }
 
   public getDataSource() {
@@ -89,7 +86,8 @@ export class ProviderComponent implements OnInit {
     {
       return this.dataSource
     }
-    this.dataSource.data = this.providersService.getProviderTree(this.providerId!)
+
+    this.dataSource.data = this.providerService.getProviderTree(this.providerId!)!
     this.isDataSourceInitialized = true;
     return this.dataSource
   }

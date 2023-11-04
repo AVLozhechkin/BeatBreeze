@@ -15,11 +15,15 @@ public class PlaylistRepository : IPlaylistRepository
         _applicationContext = applicationContext;
     }
 
-    public async Task<Playlist?> GetByIdAsync(Guid playlistId, bool asNoTracking = true)
+    public async Task<Playlist?> GetByIdAsync(Guid playlistId, bool includeSongFiles, bool asNoTracking = true)
     {
-        var query = _applicationContext.Playlists
-            .Include(pl => pl.PlaylistItems)
-            .AsQueryable();
+        var query = _applicationContext.Playlists.AsQueryable();
+
+        if (includeSongFiles)
+        {
+            query = query.Include(pl => pl.PlaylistItems)
+                .ThenInclude(pi => pi.SongFile);
+        }
 
         if (asNoTracking)
         {
@@ -29,12 +33,15 @@ public class PlaylistRepository : IPlaylistRepository
         return await query.FirstOrDefaultAsync(pl => pl.Id == playlistId);
     }
 
-    public async Task<List<Playlist>> GetAllByUserIdAsync(Guid userId, bool asNoTracking = true)
+    public async Task<List<Playlist>> GetAllByUserIdAsync(Guid userId, bool includeSongFiles, bool asNoTracking = true)
     {
-        var query = _applicationContext.Playlists
-            .Include(pl => pl.PlaylistItems)
-                .ThenInclude(pi => pi.SongFile)
-            .AsQueryable();
+        var query = _applicationContext.Playlists.AsQueryable();
+
+        if (includeSongFiles)
+        {
+            query = query.Include(pl => pl.PlaylistItems)
+                .ThenInclude(pi => pi.SongFile);
+        }
 
         if (asNoTracking)
         {

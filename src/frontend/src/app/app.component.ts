@@ -3,7 +3,6 @@ import { PlayerComponent } from './feature-player/player.component';
 import {AuthService} from "./shared/services/auth.service";
 import {HeaderComponent} from "./feature-header/header.component";
 import {RouterOutlet} from "@angular/router";
-import {PlaylistsService} from "./shared/services/playlists.service";
 import {HistoriesService} from "./shared/services/histories.service";
 
 @Component({
@@ -20,13 +19,11 @@ import {HistoriesService} from "./shared/services/histories.service";
 })
 export class AppComponent implements OnInit {
   private readonly authService = inject(AuthService);
-  private readonly playlistsService = inject(PlaylistsService)
   private readonly historyService = inject(HistoriesService)
 
 
   ngOnInit() {
     this.authService.refresh();
-    this.playlistsService.fetchPlaylists();
     this.historyService.getHistory();
   }
 }

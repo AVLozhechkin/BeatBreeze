@@ -1,17 +1,34 @@
-﻿using System.Data;
-using CloudMusicPlayer.Core.Models;
+﻿using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
 using CSharpFunctionalExtensions;
+using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
-internal class SongFileRepository : ISongFileRepository
+internal sealed class SongFileRepository : ISongFileRepository
 {
     private readonly ApplicationContext _applicationContext;
 
     public SongFileRepository(ApplicationContext applicationContext)
     {
         _applicationContext = applicationContext;
+    }
+
+    public async Task<SongFile?> GetById(Guid songFileId, bool includeDataProvider, bool asNoTracking = true)
+    {
+        var query = _applicationContext.SongFiles.AsQueryable();
+
+        if (includeDataProvider)
+        {
+            query = query.Include(sf => sf.DataProvider);
+        }
+
+        if (asNoTracking)
+        {
+            query = query.AsNoTracking();
+        }
+
+        return await query.FirstOrDefaultAsync(pl => pl.Id == songFileId);
     }
 
     public async Task<Result> AddRangeAsync(IEnumerable<SongFile> songFiles, bool saveChanges = false)

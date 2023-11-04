@@ -9,7 +9,7 @@ namespace CloudMusicPlayer.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PlaylistsController : ControllerBase
+public sealed class PlaylistsController : ControllerBase
 {
     private readonly PlaylistService _playlistService;
 
@@ -26,7 +26,7 @@ public class PlaylistsController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var userIdResult = this.User.GetUserGuid();
+        var userIdResult = User.GetUserGuid();
 
         if (userIdResult.IsFailure)
         {
@@ -46,7 +46,7 @@ public class PlaylistsController : ControllerBase
     [HttpGet("{playlistId:required}")]
     public async Task<ActionResult<Playlist>> GetById(Guid playlistId)
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userIdResult = User.GetUserGuid();
 
         if (userIdResult.IsFailure)
         {
@@ -71,7 +71,7 @@ public class PlaylistsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Playlist>>> GetPlaylistsByUserId()
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userIdResult = User.GetUserGuid();
 
         if (userIdResult.IsFailure)
         {
@@ -91,7 +91,7 @@ public class PlaylistsController : ControllerBase
     [HttpDelete("{playlistId:required}")]
     public async Task<IActionResult> Delete(Guid playlistId)
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userIdResult = User.GetUserGuid();
 
         if (userIdResult.IsFailure)
         {
@@ -111,7 +111,7 @@ public class PlaylistsController : ControllerBase
     [HttpPost("addSong")]
     public async Task<ActionResult<Playlist>> AddSongToPlaylist(PlaylistItemRequest playlistItemRequest)
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userIdResult = User.GetUserGuid();
 
         if (userIdResult.IsFailure)
         {

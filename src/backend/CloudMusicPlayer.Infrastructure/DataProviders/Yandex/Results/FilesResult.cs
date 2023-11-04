@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace CloudMusicPlayer.Infrastructure.DataProviders.Yandex;
+namespace CloudMusicPlayer.Infrastructure.DataProviders.Yandex.Results;
 
-public record FilesResponse
+public record FilesResult
 {
     [JsonPropertyName("items")]
     public IReadOnlyList<YandexFile> Items { get; set; } = null!;

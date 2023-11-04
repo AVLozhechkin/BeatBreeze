@@ -5,6 +5,7 @@ using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Services;
 using CloudMusicPlayer.Core.UnitOfWorks;
 using CloudMusicPlayer.Infrastructure;
+using CloudMusicPlayer.Infrastructure.DataProviders.Dropbox;
 using CloudMusicPlayer.Infrastructure.UnitOfWorks;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -21,7 +22,7 @@ builder.Services.AddRepositories();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-builder.Services.AddExternalDataProviders();
+builder.Services.AddExternalDataProviders(builder.Configuration);
 
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 
@@ -64,8 +65,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SaveTokens = true;
     }).AddDropbox(options =>
     {
+        options.SignInScheme = "External";
         options.ClientId = builder.Configuration["dropbox:clientId"]!;
         options.ClientSecret = builder.Configuration["dropbox:clientSecret"]!;
+        options.SaveTokens = true;
+        options.AccessType = "offline";
     });
 
 builder.Services.AddAuthorization();

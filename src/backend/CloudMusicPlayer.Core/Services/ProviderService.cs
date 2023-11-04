@@ -5,7 +5,7 @@ using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Core.Services;
 
-public class ProviderService
+public sealed class ProviderService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEnumerable<IExternalProviderService> _externalProviderServices;
@@ -20,7 +20,7 @@ public class ProviderService
 
     public async Task<Result<List<DataProvider>>> GetAllProvidersByUserId(Guid userId)
     {
-        var providers = await _unitOfWork.DataProviderRepository.GetAllByUserIdAsync(userId, true);
+        var providers = await _unitOfWork.DataProviderRepository.GetAllByUserIdAsync(userId);
 
         return Result.Success(providers);
     }
@@ -35,6 +35,52 @@ public class ProviderService
         }
 
         return Result.Success(provider);
+    }
+
+    public async Task<Result<string>> GetSongFileUrl(Guid songFileId, Guid userId)
+    {
+        var songFile = await _unitOfWork.SongFileRepository.GetById(songFileId, true);
+
+        if (songFile?.DataProvider is null)
+        {
+            return Result.Failure<string>("SongFile not found");
+        }
+
+        if (songFile.DataProvider.UserId != userId)
+        {
+            return Result.Failure<string>("User is not the owner of the SongFile");
+        }
+
+        var externalProvider = _externalProviderServices
+            .FirstOrDefault(ep
+                => ep.CanBeExecuted(songFile.DataProvider.ProviderType));
+
+        if (externalProvider is null)
+        {
+            return Result.Failure<string>("External provider service not found");
+        }
+
+        Task<Result> updateDataProvider = null!;
+
+        // If token is expired
+        if (songFile.DataProvider.AccessToken.ExpiresAt < DateTimeOffset.UtcNow)
+        {
+            var apiToken = await externalProvider.GetApiToken(songFile.DataProvider.RefreshToken);
+
+            songFile.DataProvider.AccessToken.Token = apiToken!.Token;
+            songFile.DataProvider.AccessToken.ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(apiToken.ExpiresIn);
+
+            updateDataProvider = _unitOfWork.DataProviderRepository.UpdateAsync(songFile.DataProvider);
+        }
+
+        var url = await externalProvider.GetSongFileUrl(songFile, songFile.DataProvider);
+
+        if (updateDataProvider is not null)
+        {
+            await updateDataProvider;
+        }
+
+        return Result.Success(url!);
     }
 
     public async Task<Result<DataProvider>> AddDataProvider(
@@ -137,7 +183,6 @@ public class ProviderService
             }
             else
             {
-                oldSong.Url = value.Url;
                 newSongsDictionary.Remove(oldSong.FileId);
             }
         }

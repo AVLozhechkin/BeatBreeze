@@ -9,7 +9,7 @@ namespace CloudMusicPlayer.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class UsersController : ControllerBase
+public sealed class UsersController : ControllerBase
 {
     private readonly UserService _userService;
 

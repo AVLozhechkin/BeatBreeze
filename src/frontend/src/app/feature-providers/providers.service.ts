@@ -1,8 +1,8 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { ProvidersApiClient } from './api/providers-api-client';
-import { DataProvider } from '../models/data-provider.model';
-import { convertToTreeNode } from '../../feature-provider/utils';
-import { ProviderTypes } from '../models/provider-types.model';
+import { ProvidersApiClient } from '../shared/services/api/providers-api-client';
+import {DataProvider} from "../shared/models/data-provider.model";
+import {ProviderTypes} from "../shared/models/provider-types.model";
+
 
 @Injectable({
   providedIn: 'root',
@@ -12,11 +12,9 @@ export class ProvidersService {
 
   private readonly _providers = signal<DataProvider[]>([]);
   private readonly _isLoading = signal<boolean>(false);
-  private readonly _isInitialized = signal<boolean>(false);
 
   public readonly providers = computed(() => this._providers());
   public readonly isLoading = computed(() => this._isLoading());
-  public readonly isInitialized = computed(() => this._isInitialized());
 
   constructor() {}
 
@@ -26,7 +24,6 @@ export class ProvidersService {
       next: (fetchedProviders) => {
         this._providers.set(fetchedProviders);
         this._isLoading.set(false);
-        this._isInitialized.set(true);
       },
     });
   }
@@ -50,18 +47,8 @@ export class ProvidersService {
     });
   }
 
-  public getProviderTree(providerId: string) {
-    const providers = this._providers();
-    const provider = providers.find((p) => p.id === providerId);
-    if (!provider) {
-      return [undefined];
-    }
-
-    return convertToTreeNode(provider.songFiles);
-  }
-
   addProvider(providerType: ProviderTypes) {
-    this.providersApiClient.addYandex();
+    this.providersApiClient.addProvider(providerType);
   }
 
   removeProvider(providerId: string) {

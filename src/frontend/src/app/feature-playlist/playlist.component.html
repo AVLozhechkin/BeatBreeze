@@ -1,10 +1,10 @@
-<ng-container *ngIf="this.playlistsService.isLoading(); else loaded">
+<ng-container *ngIf="this.playlistService.isLoading(); else loaded">
   <mat-progress-bar mode="indeterminate"></mat-progress-bar>
 </ng-container>
 <ng-template #loaded>
   <div class="container mx-auto flex flex-col justify-center pt-10">
     <button mat-flat-button (click)="this.playAll()">Play playlist</button>
-    <table mat-table [dataSource]="playlistsService.currentPlaylist()!.songFiles" class="mat-elevation-z8">
+    <table mat-table [dataSource]="playlistService.playlist()!.songFiles" class="mat-elevation-z8">
 
       <!-- Position Column -->
       <ng-container matColumnDef="position">

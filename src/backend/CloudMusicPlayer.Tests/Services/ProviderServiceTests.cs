@@ -122,11 +122,11 @@ public class ProviderServiceTests
         var expiresAt = DateTimeOffset.UtcNow.ToString();
         Expression<Predicate<DataProvider>> dataProviderPredicate = provider =>
             provider.Name == providerName &&
-            provider.ApiToken == apiToken &&
+            provider.AccessToken.Token == apiToken &&
             provider.RefreshToken == refreshToken &&
             provider.ProviderType == providerType &&
             provider.UpdatedAt != default &&
-            provider.ConnectedAt != default &&
+            provider.AddedAt != default &&
             provider.UserId == userId;
         var songFiles = new SongFile[1];
 
@@ -223,11 +223,11 @@ public class ProviderServiceTests
         var expiresAt = DateTimeOffset.UtcNow.ToString();
         Expression<Predicate<DataProvider>> dataProviderPredicate = provider =>
             provider.Name == providerName &&
-            provider.ApiToken == apiToken &&
+            provider.AccessToken.Token == apiToken &&
             provider.RefreshToken == refreshToken &&
             provider.ProviderType == ProviderTypes.Yandex &&
             provider.UpdatedAt != default &&
-            provider.ConnectedAt != default &&
+            provider.AddedAt != default &&
             provider.UserId == userId;
         var songFiles = new SongFile[1];
         var errorMessage = "To Infinity and Beyond!";
@@ -297,17 +297,17 @@ public class ProviderServiceTests
             ProviderType = ProviderTypes.Yandex,
             SongFiles = new List<SongFile>()
             {
-                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "1"},
-                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "2"},
-                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "3"},
-                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "4"},
+                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "1"},
+                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "2"},
+                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "3"},
+                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "4"},
             }
         };
         var updatedSongFiles = new SongFile[]
         {
-            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "3"},
-            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "4"},
-            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "5"},
+            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "3"},
+            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "4"},
+            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "5"},
         };
 
         unitOfWorkMock
@@ -380,17 +380,17 @@ public class ProviderServiceTests
             ProviderType = ProviderTypes.Yandex,
             SongFiles = new List<SongFile>()
             {
-                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "1"},
-                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "2"},
-                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "3"},
-                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "4"},
+                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "1"},
+                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "2"},
+                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "3"},
+                new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "4"},
             }
         };
         var updatedSongFiles = new SongFile[]
         {
-            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "3"},
-            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "4"},
-            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = "", Url = "", FileId = "5"},
+            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "3"},
+            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "4"},
+            new () { Id = Guid.NewGuid(), Hash = "", Name = "", Path = "", Type = AudioTypes.Mp3, FileId = "5"},
         };
         var errorMessage = "To Infinity and Beyond!";
 

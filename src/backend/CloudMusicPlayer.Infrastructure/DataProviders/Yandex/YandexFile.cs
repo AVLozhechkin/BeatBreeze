@@ -6,16 +6,10 @@ namespace CloudMusicPlayer.Infrastructure.DataProviders.Yandex;
 public record YandexFile
 {
     [JsonPropertyName("size")]
-    public int Size { get; set; }
+    public uint Size { get; set; }
 
     [JsonPropertyName("name")]
     public required string Name { get; set; }
-
-    [JsonPropertyName("mime_type")]
-    public required string MimeType { get; set; }
-
-    [JsonPropertyName("file")]
-    public required string FileUrl { get; set; }
 
     [JsonPropertyName("path")]
     public required string Path { get; set; }
@@ -27,17 +21,30 @@ public record YandexFile
 
     public SongFile MapToSongFile(DataProvider dataProvider)
     {
-
         return new SongFile
         {
             Name = Name,
             Path = Path,
             Hash = Md5,
             FileId = ResourceId,
-            Type = MimeType,
-            Url = FileUrl,
+            Type = GetAudioType(),
             Size = Size,
             DataProvider = dataProvider
         };
+    }
+
+    private AudioTypes GetAudioType()
+    {
+        if (Path.EndsWith("flac"))
+        {
+            return AudioTypes.Flac;
+        }
+
+        if (Path.EndsWith("mp3"))
+        {
+            return AudioTypes.Mp3;
+        }
+
+        return AudioTypes.Unknown;
     }
 }

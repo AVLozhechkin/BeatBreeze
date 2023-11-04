@@ -9,7 +9,7 @@ using Xunit;
 
 namespace CloudMusicPlayer.Tests.Services;
 
-public class PlaylistsServiceTests
+public sealed class PlaylistsServiceTests
 {
     [Fact]
     public async Task GetPlaylistsByUserId_Should_ReturnUserPlaylists()
@@ -21,7 +21,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetAllByUserIdAsync(userId)
+            .GetAllByUserIdAsync(userId, false)
             .Returns(playlists);
 
         var playlistService = new PlaylistService(unitOfWorkMock);
@@ -33,7 +33,7 @@ public class PlaylistsServiceTests
         await unitOfWorkMock
             .PlaylistRepository
             .Received(1)
-            .GetAllByUserIdAsync(userId);
+            .GetAllByUserIdAsync(userId, false);
         Assert.True(result.IsSuccess);
         Assert.Equal(playlists, result.Value);
     }
@@ -47,7 +47,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlist.Id)
+            .GetByIdAsync(playlist.Id, true)
             .Returns(playlist);
 
         var playlistService = new PlaylistService(unitOfWorkMock);
@@ -59,7 +59,7 @@ public class PlaylistsServiceTests
         await unitOfWorkMock
             .PlaylistRepository
             .Received(1)
-            .GetByIdAsync(playlist.Id);
+            .GetByIdAsync(playlist.Id, true);
         Assert.True(result.IsSuccess);
         Assert.Equal(playlist, result.Value);
     }
@@ -75,7 +75,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlist.Id)
+            .GetByIdAsync(playlist.Id, true)
             .Returns(playlist);
 
         var playlistService = new PlaylistService(unitOfWorkMock);
@@ -87,7 +87,7 @@ public class PlaylistsServiceTests
         await unitOfWorkMock
             .PlaylistRepository
             .Received(1)
-            .GetByIdAsync(playlist.Id);
+            .GetByIdAsync(playlist.Id, true);
         Assert.True(result.IsFailure);
         Assert.Equal(failureMessage, result.Error);
     }
@@ -101,7 +101,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlist.Id)
+            .GetByIdAsync(playlist.Id, true)
             .ReturnsNull();
 
         var playlistService = new PlaylistService(unitOfWorkMock);
@@ -113,7 +113,7 @@ public class PlaylistsServiceTests
         await unitOfWorkMock
             .PlaylistRepository
             .Received(1)
-            .GetByIdAsync(playlist.Id);
+            .GetByIdAsync(playlist.Id, true);
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value);
     }
@@ -241,7 +241,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlistId)
+            .GetByIdAsync(playlistId, true)
             .Returns(playlist);
         unitOfWorkMock
             .PlaylistItemRepository
@@ -279,7 +279,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlistId)
+            .GetByIdAsync(playlistId, true)
             .ReturnsNull();
 
         var playlistService = new PlaylistService(unitOfWorkMock);
@@ -309,7 +309,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlistId)
+            .GetByIdAsync(playlistId, true)
             .Returns(playlist);
 
         var playlistService = new PlaylistService(unitOfWorkMock);
@@ -340,7 +340,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlistId)
+            .GetByIdAsync(playlistId, true)
             .Returns(playlist);
         unitOfWorkMock
             .PlaylistItemRepository
@@ -388,7 +388,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlistId)
+            .GetByIdAsync(playlistId, true)
             .Returns(playlist);
         unitOfWorkMock
             .PlaylistItemRepository
@@ -424,7 +424,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlistId)
+            .GetByIdAsync(playlistId, true)
             .ReturnsNull();
 
         var playlistService = new PlaylistService(unitOfWorkMock);
@@ -457,7 +457,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlistId)
+            .GetByIdAsync(playlistId, true)
             .Returns(playlist);
 
         var playlistService = new PlaylistService(unitOfWorkMock);
@@ -490,7 +490,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlistId)
+            .GetByIdAsync(playlistId, true)
             .Returns(playlist);
 
         var playlistService = new PlaylistService(unitOfWorkMock);
@@ -532,7 +532,7 @@ public class PlaylistsServiceTests
 
         unitOfWorkMock
             .PlaylistRepository
-            .GetByIdAsync(playlistId)
+            .GetByIdAsync(playlistId, true)
             .Returns(playlist);
 
         unitOfWorkMock

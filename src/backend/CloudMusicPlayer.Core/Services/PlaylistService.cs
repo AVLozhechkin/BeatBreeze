@@ -4,7 +4,7 @@ using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Core.Services;
 
-public class PlaylistService
+public sealed class PlaylistService
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -15,14 +15,14 @@ public class PlaylistService
 
     public async Task<Result<IEnumerable<Playlist>>> GetPlaylistsByUserId(Guid userId)
     {
-        var playlists = await _unitOfWork.PlaylistRepository.GetAllByUserIdAsync(userId);
+        var playlists = await _unitOfWork.PlaylistRepository.GetAllByUserIdAsync(userId, true);
 
         return Result.Success<IEnumerable<Playlist>>(playlists);
     }
 
     public async Task<Result<Playlist?>> GetPlaylistById(Guid playlistId, Guid userId)
     {
-        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId);
+        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true);
 
         if (playlist is null)
         {
@@ -51,6 +51,11 @@ public class PlaylistService
         return Result.Success(playlistCreationResult.Value);
     }
 
+    /*public async Task<Result<Playlist>> CreatePlaylist(Guid userId, string name, IEnumerable<Guid> songFileIds)
+    {
+
+    }*/
+
     public async Task<Result> DeletePlaylist(Guid playlistId, Guid userId)
     {
         var result = await _unitOfWork.PlaylistRepository.RemoveAsync(playlistId, userId, true);
@@ -65,7 +70,7 @@ public class PlaylistService
 
     public async Task<Result<Playlist>> AddToPlaylist(Guid playlistId, Guid songFileId, Guid userId)
     {
-        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId);
+        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, false);
 
         if (playlist is null)
         {
@@ -97,7 +102,7 @@ public class PlaylistService
 
     public async Task<Result<Playlist>> RemoveFromPlaylist(Guid playlistId, Guid songFileId, Guid userId)
     {
-        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId);
+        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true);
 
         if (playlist is null)
         {

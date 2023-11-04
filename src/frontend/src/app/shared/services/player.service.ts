@@ -5,6 +5,8 @@ import {HistoriesService} from "./histories.service";
 import {QueueService} from "./queue.service";
 import {DataProvider} from "../models/data-provider.model";
 import {Playlist} from "../models/playlist.model";
+import {ProvidersApiClient} from "./api/providers-api-client";
+import {firstValueFrom, lastValueFrom} from "rxjs";
 
 export type RepeatType = 'repeat-1' | 'repeat-all' | 'repeat-none'
 export type PlayState = 'idle' | 'playing' | 'paused'
@@ -14,6 +16,8 @@ export type PlayState = 'idle' | 'playing' | 'paused'
 export class PlayerService {
   private historiesService = inject(HistoriesService)
   private queueService = inject(QueueService)
+  private providersApiClient = inject(ProvidersApiClient)
+
   private currentHowl: Howl | undefined;
 
   private readonly _repeatType = signal<RepeatType>('repeat-none');
@@ -50,15 +54,18 @@ export class PlayerService {
     this.startPlaying(song)
   }
 
-  private startPlaying(song: Song)
+  private async startPlaying(song: Song)
   {
     if (this.currentHowl !== undefined) {
       this.currentHowl.unload()
     }
 
+    const url = await firstValueFrom(this.providersApiClient.getSongUrl(song.id))
+    console.log(url)
+
     this._currentSong.set(song)
     this.currentHowl = new Howl({
-      src: song.url,
+      src: url,
       html5: true,
       volume: 0.1,
     });
