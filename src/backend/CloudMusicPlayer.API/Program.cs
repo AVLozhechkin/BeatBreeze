@@ -3,10 +3,7 @@ using System.Text.Json.Serialization;
 using CloudMusicPlayer.API.Services;
 using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Services;
-using CloudMusicPlayer.Core.UnitOfWorks;
 using CloudMusicPlayer.Infrastructure;
-using CloudMusicPlayer.Infrastructure.DataProviders.Dropbox;
-using CloudMusicPlayer.Infrastructure.UnitOfWorks;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -20,7 +17,7 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddRepositories();
 
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddUnitOfWork();
 
 builder.Services.AddExternalDataProviders(builder.Configuration);
 

@@ -2,7 +2,7 @@
 
 namespace CloudMusicPlayer.Infrastructure.DataProviders.Yandex.Results;
 
-public class TemporaryLinkResult
+internal record TemporaryLinkResult
 {
     [JsonPropertyName("href")]
     public required string Link { get; set; }

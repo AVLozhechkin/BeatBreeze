@@ -122,7 +122,7 @@ public class ProviderServiceTests
         var expiresAt = DateTimeOffset.UtcNow.ToString();
         Expression<Predicate<DataProvider>> dataProviderPredicate = provider =>
             provider.Name == providerName &&
-            provider.AccessToken.Token == apiToken &&
+            provider.AccessToken == apiToken &&
             provider.RefreshToken == refreshToken &&
             provider.ProviderType == providerType &&
             provider.UpdatedAt != default &&
@@ -223,7 +223,7 @@ public class ProviderServiceTests
         var expiresAt = DateTimeOffset.UtcNow.ToString();
         Expression<Predicate<DataProvider>> dataProviderPredicate = provider =>
             provider.Name == providerName &&
-            provider.AccessToken.Token == apiToken &&
+            provider.AccessToken == apiToken &&
             provider.RefreshToken == refreshToken &&
             provider.ProviderType == ProviderTypes.Yandex &&
             provider.UpdatedAt != default &&

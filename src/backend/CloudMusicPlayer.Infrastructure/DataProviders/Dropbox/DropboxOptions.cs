@@ -1,6 +1,6 @@
 ﻿namespace CloudMusicPlayer.Infrastructure.DataProviders.Dropbox;
 
-public record DropboxOptions
+internal record DropboxOptions
 {
     public const string SectionName = "dropbox";
 

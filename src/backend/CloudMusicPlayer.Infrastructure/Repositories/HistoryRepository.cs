@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
 
-public class HistoryRepository : IHistoryRepository
+internal sealed class HistoryRepository : IHistoryRepository
 {
     private readonly ApplicationContext _applicationContext;
 

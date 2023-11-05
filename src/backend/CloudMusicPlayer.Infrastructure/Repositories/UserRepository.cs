@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
 
-public class UserRepository : IUserRepository
+internal sealed class UserRepository : IUserRepository
 {
     private readonly ApplicationContext _applicationContext;
 

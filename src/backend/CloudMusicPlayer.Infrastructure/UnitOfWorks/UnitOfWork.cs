@@ -6,7 +6,7 @@ using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Infrastructure.UnitOfWorks;
 
-public class UnitOfWork : IUnitOfWork
+internal sealed class UnitOfWork : IUnitOfWork
 {
     private readonly ApplicationContext _applicationContext;
 

@@ -5,6 +5,7 @@ using CSharpFunctionalExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
+
 internal sealed class SongFileRepository : ISongFileRepository
 {
     private readonly ApplicationContext _applicationContext;

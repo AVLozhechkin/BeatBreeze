@@ -4,7 +4,7 @@ using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Core.Services;
 
-public class HistoryService
+public sealed class HistoryService
 {
     private readonly IUnitOfWork _unitOfWork;
 

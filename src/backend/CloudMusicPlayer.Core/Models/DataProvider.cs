@@ -14,7 +14,8 @@ public record DataProvider
     public string Name { get; init; } = string.Empty;
     public DateTimeOffset AddedAt { get; init; }
     public DateTimeOffset UpdatedAt { get; set; }
-    public AccessToken AccessToken { get; set; } = null!;
+    public string AccessToken { get; set; } = string.Empty;
+    public DateTimeOffset AccessTokenExpiresAt { get; set; }
     public string RefreshToken { get; init; } = string.Empty;
     public ICollection<SongFile> SongFiles { get; init; } = null!;
 
@@ -45,7 +46,8 @@ public record DataProvider
             Name = name,
             AddedAt = currentDate,
             UpdatedAt = currentDate,
-            AccessToken = new AccessToken { Token = apiToken, ExpiresAt = expires},
+            AccessToken = apiToken,
+            AccessTokenExpiresAt = expires,
             RefreshToken = refreshToken,
         };
 

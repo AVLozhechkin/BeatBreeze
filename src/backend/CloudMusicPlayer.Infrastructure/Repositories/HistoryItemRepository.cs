@@ -5,7 +5,7 @@ using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
 
-public class HistoryItemRepository : IHistoryItemRepository
+internal sealed class HistoryItemRepository : IHistoryItemRepository
 {
     private readonly ApplicationContext _applicationContext;
 

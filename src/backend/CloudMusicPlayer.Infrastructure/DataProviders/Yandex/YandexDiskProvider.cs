@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace CloudMusicPlayer.Infrastructure.DataProviders.Yandex;
 
-public class YandexDiskProvider : IExternalProviderService
+internal sealed class YandexDiskProvider : IExternalProviderService
 {
     private const string FilesUrl = "https://cloud-api.yandex.net/v1/disk/resources/files/";
     private const string RefreshAccessTokenUrl = "https://oauth.yandex.ru/";
@@ -33,7 +33,7 @@ public class YandexDiskProvider : IExternalProviderService
     {
         using var httpClient = _httpClientFactory.CreateClient();
 
-        httpClient.DefaultRequestHeaders.Add("Authorization", $"OAuth {provider.AccessToken.Token}");
+        httpClient.DefaultRequestHeaders.Add("Authorization", $"OAuth {provider.AccessToken}");
 
         var uri = $"{FilesUrl}?media_type=audio&limit={Limit}&fields={Fields}";
 
@@ -53,7 +53,7 @@ public class YandexDiskProvider : IExternalProviderService
     {
         var httpClient = _httpClientFactory.CreateClient();
 
-        httpClient.DefaultRequestHeaders.Add("Authorization", $"OAuth {provider.AccessToken.Token}");
+        httpClient.DefaultRequestHeaders.Add("Authorization", $"OAuth {provider.AccessToken}");
 
         var response = await httpClient.GetFromJsonAsync<TemporaryLinkResult>($"{DownloadUrl}/?path={songFile.Path}");
 

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Query;
 
 namespace CloudMusicPlayer.Infrastructure.Database;
 
-public sealed class ApplicationContext : DbContext
+internal sealed class ApplicationContext : DbContext
 {
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<PlaylistItem> PlaylistItems { get; set; } = null!;
@@ -28,8 +28,6 @@ public sealed class ApplicationContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
-        modelBuilder.Entity<DataProvider>().OwnsOne(dp => dp.AccessToken);
 
         modelBuilder.Entity<DataProvider>()
             .Property(dp => dp.ProviderType)

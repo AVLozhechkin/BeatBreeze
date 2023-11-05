@@ -63,21 +63,25 @@ public sealed class ProviderService
         Task<Result> updateDataProvider = null!;
 
         // If token is expired
-        if (songFile.DataProvider.AccessToken.ExpiresAt < DateTimeOffset.UtcNow)
+        if (songFile.DataProvider.AccessTokenExpiresAt < DateTimeOffset.UtcNow)
         {
             var apiToken = await externalProvider.GetApiToken(songFile.DataProvider.RefreshToken);
 
-            songFile.DataProvider.AccessToken.Token = apiToken!.Token;
-            songFile.DataProvider.AccessToken.ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(apiToken.ExpiresIn);
+            songFile.DataProvider.AccessToken = apiToken!.Token;
+            songFile.DataProvider.AccessTokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(apiToken.ExpiresIn);
 
-            updateDataProvider = _unitOfWork.DataProviderRepository.UpdateAsync(songFile.DataProvider);
+            updateDataProvider = _unitOfWork.DataProviderRepository.UpdateAsync(songFile.DataProvider, true);
         }
 
         var url = await externalProvider.GetSongFileUrl(songFile, songFile.DataProvider);
 
         if (updateDataProvider is not null)
         {
-            await updateDataProvider;
+            var updateResult = await updateDataProvider;
+            if (updateResult.IsFailure)
+            {
+                return Result.Failure<string>("Data provider can't be updated");
+            }
         }
 
         return Result.Success(url!);

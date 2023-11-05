@@ -3,7 +3,7 @@ using CloudMusicPlayer.Core.Models;
 
 namespace CloudMusicPlayer.Infrastructure.DataProviders.Yandex;
 
-public record YandexFile
+internal record YandexFile
 {
     [JsonPropertyName("size")]
     public uint Size { get; set; }

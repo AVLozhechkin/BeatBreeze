@@ -1,9 +1,11 @@
 ﻿using CloudMusicPlayer.Core.DataProviders;
 using CloudMusicPlayer.Core.Repositories;
+using CloudMusicPlayer.Core.UnitOfWorks;
 using CloudMusicPlayer.Infrastructure.Database;
 using CloudMusicPlayer.Infrastructure.DataProviders.Dropbox;
 using CloudMusicPlayer.Infrastructure.DataProviders.Yandex;
 using CloudMusicPlayer.Infrastructure.Repositories;
+using CloudMusicPlayer.Infrastructure.UnitOfWorks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +35,12 @@ public static class StartupExtensions
         services.AddScoped<IHistoryRepository, HistoryRepository>();
 
         services.AddScoped<IHistoryItemRepository, HistoryItemRepository>();
+
+    }
+
+    public static void AddUnitOfWork(this IServiceCollection services)
+    {
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
     }
 
     public static void AddExternalDataProviders(this IServiceCollection services, IConfigurationManager configuration)

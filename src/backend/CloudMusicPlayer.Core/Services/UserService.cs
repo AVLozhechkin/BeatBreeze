@@ -4,7 +4,7 @@ using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Core.Services;
 
-public class UserService
+public sealed class UserService
 {
     private readonly IUserRepository _userRepository;
 

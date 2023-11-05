@@ -2,7 +2,7 @@
 
 namespace CloudMusicPlayer.Infrastructure.DataProviders.Dropbox.Results;
 
-public class ListFolderResult
+internal record ListFolderResult
 {
     [JsonPropertyName("entries")]
     public IList<Metadata> Entries { get; set; }
@@ -12,25 +12,4 @@ public class ListFolderResult
 
     [JsonPropertyName("cursor")]
     public string Cursor { get; set; }
-}
-
-public class Metadata
-{
-    [JsonPropertyName(".tag")]
-    public required string Tag { get; set; }
-
-    [JsonPropertyName("name")]
-    public required string Name { get; set; }
-
-    [JsonPropertyName("path_display")]
-    public required string PathDisplay { get; set; }
-
-    [JsonPropertyName("id")]
-    public required string Id { get; set; }
-
-    [JsonPropertyName("size")]
-    public required ulong Size { get; set; }
-
-    [JsonPropertyName("content_hash")]
-    public required string ContentHash { get; set; }
 }

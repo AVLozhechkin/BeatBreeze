@@ -2,7 +2,7 @@
 
 namespace CloudMusicPlayer.Infrastructure.DataProviders.Dropbox.Args;
 
-public record ListFolderArg
+internal record ListFolderArg
 {
     [JsonPropertyName("path")]
     public required string Path { get; init; }

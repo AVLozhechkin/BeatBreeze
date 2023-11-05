@@ -2,7 +2,7 @@
 
 namespace CloudMusicPlayer.Infrastructure.DataProviders.Yandex.Results;
 
-public record FilesResult
+internal record FilesResult
 {
     [JsonPropertyName("items")]
     public IReadOnlyList<YandexFile> Items { get; set; } = null!;

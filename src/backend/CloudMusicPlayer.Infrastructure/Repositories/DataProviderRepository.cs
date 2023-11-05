@@ -5,7 +5,8 @@ using CSharpFunctionalExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
-public sealed class DataProviderRepository : IDataProviderRepository
+
+internal sealed class DataProviderRepository : IDataProviderRepository
 {
     private readonly ApplicationContext _applicationContext;
 
@@ -71,9 +72,9 @@ public sealed class DataProviderRepository : IDataProviderRepository
             var toBeUpdated = _applicationContext.DataProviders.Where(dp => dp.Id == dataProvider.Id);
 
             return await _applicationContext.ExecuteUpdateResult(toBeUpdated, s =>
-                    s.SetProperty(dp => dp.AccessToken.Token, dataProvider.AccessToken.Token)
-                        .SetProperty(dp => dp.RefreshToken, dataProvider.RefreshToken)
-                        .SetProperty(dp => dp.AccessToken.ExpiresAt, dataProvider.AccessToken.ExpiresAt),
+                    s.SetProperty(dp => dp.AccessToken, dataProvider.AccessToken)
+                        .SetProperty(dp => dp.AccessTokenExpiresAt, dataProvider.AccessTokenExpiresAt)
+                        .SetProperty(dp => dp.RefreshToken, dataProvider.RefreshToken),
                 "Data provider was not updated");
         }
 

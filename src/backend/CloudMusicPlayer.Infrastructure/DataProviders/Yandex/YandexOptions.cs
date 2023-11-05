@@ -1,6 +1,6 @@
 ﻿namespace CloudMusicPlayer.Infrastructure.DataProviders.Yandex;
 
-public record YandexOptions
+internal record YandexOptions
 {
     public const string SectionName = "yandex";
 

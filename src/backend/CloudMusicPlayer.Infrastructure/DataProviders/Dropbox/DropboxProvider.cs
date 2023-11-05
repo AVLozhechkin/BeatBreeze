@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace CloudMusicPlayer.Infrastructure.DataProviders.Dropbox;
 
-public sealed class DropboxProvider : IExternalProviderService
+internal sealed class DropboxProvider : IExternalProviderService
 {
     private const string FilesUrl = "https://api.dropboxapi.com/2/files/list_folder";
     private const string FilesContinueUrl = "https://api.dropboxapi.com/2/files/list_folder/continue";
@@ -34,7 +34,7 @@ public sealed class DropboxProvider : IExternalProviderService
     {
         var httpClient = _httpClientFactory.CreateClient();
 
-        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {provider.AccessToken.Token}");
+        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {provider.AccessToken}");
 
         var defaultBody = new ListFolderArg
         {
@@ -87,7 +87,7 @@ public sealed class DropboxProvider : IExternalProviderService
     {
         var httpClient = _httpClientFactory.CreateClient();
 
-        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {provider.AccessToken.Token}");
+        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {provider.AccessToken}");
 
         var body = new TemporaryLinkArg
         {
