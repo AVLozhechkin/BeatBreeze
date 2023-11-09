@@ -1,11 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
-using CSharpFunctionalExtensions;
+﻿using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Core.Models;
 
 public class Playlist
 {
-    [Key]
     public Guid Id { get; init; }
 
     public string Name { get; init; } = null!;

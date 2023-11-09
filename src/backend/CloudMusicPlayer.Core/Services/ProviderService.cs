@@ -65,15 +65,25 @@ public sealed class ProviderService
         // If token is expired
         if (songFile.DataProvider.AccessTokenExpiresAt < DateTimeOffset.UtcNow)
         {
-            var apiToken = await externalProvider.GetApiToken(songFile.DataProvider.RefreshToken);
+            var apiTokenResult = await externalProvider.GetApiToken(songFile.DataProvider.RefreshToken);
 
-            songFile.DataProvider.AccessToken = apiToken!.Token;
-            songFile.DataProvider.AccessTokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(apiToken.ExpiresIn);
+            if (apiTokenResult.IsFailure)
+            {
+                return Result.Failure<string>("Api token is expired. Can't fetch the new one.");
+            }
+
+            songFile.DataProvider.AccessToken = apiTokenResult.Value.Token;
+            songFile.DataProvider.AccessTokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(apiTokenResult.Value.ExpiresIn);
 
             updateDataProvider = _unitOfWork.DataProviderRepository.UpdateAsync(songFile.DataProvider, true);
         }
 
-        var url = await externalProvider.GetSongFileUrl(songFile, songFile.DataProvider);
+        var urlResult = await externalProvider.GetSongFileUrl(songFile, songFile.DataProvider);
+
+        if (urlResult.IsFailure)
+        {
+            return Result.Failure<string>("Can't fetch song's url");
+        }
 
         if (updateDataProvider is not null)
         {
@@ -84,7 +94,7 @@ public sealed class ProviderService
             }
         }
 
-        return Result.Success(url!);
+        return Result.Success(urlResult.Value);
     }
 
     public async Task<Result<DataProvider>> AddDataProvider(
@@ -108,9 +118,14 @@ public sealed class ProviderService
             .First(s =>
                 s.CanBeExecuted(providerType));
 
-        var songFiles = await externalProviderService.GetSongFiles(dataProviderResult.Value);
+        var songFilesResult = await externalProviderService.GetSongFiles(dataProviderResult.Value);
 
-        await _unitOfWork.SongFileRepository.AddRangeAsync(songFiles);
+        if (songFilesResult.IsFailure)
+        {
+            return Result.Failure<DataProvider>("An error occured when fetching song files");
+        }
+
+        await _unitOfWork.SongFileRepository.AddRangeAsync(songFilesResult.Value);
 
         var commitResult = await _unitOfWork.CommitAsync();
 
@@ -140,9 +155,9 @@ public sealed class ProviderService
             .First(s =>
                 s.CanBeExecuted(provider.ProviderType));
 
-        var songFiles = await externalProviderService.GetSongFiles(provider);
+        var songFilesResult = await externalProviderService.GetSongFiles(provider);
 
-        UpdateSongFiles(provider, songFiles);
+        UpdateSongFiles(provider, songFilesResult.Value);
         provider.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _unitOfWork.DataProviderRepository.UpdateAsync(provider);

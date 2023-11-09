@@ -22,8 +22,8 @@ export class AppComponent implements OnInit {
   private readonly historyService = inject(HistoriesService)
 
 
-  ngOnInit() {
+  async ngOnInit() {
     this.authService.refresh();
-    this.historyService.getHistory();
+    await this.historyService.fetchHistory();
   }
 }

@@ -8,7 +8,7 @@
       <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
         <div class="flex justify-between w-full">
           <div class="flex items-center gap-x-2">
-            <button mat-icon-button color="primary" (click)="playerService.playSong(node.file)">
+            <button mat-icon-button color="primary" (click)="playSong(node.file)">
               <mat-icon>play_circle</mat-icon>
             </button>
             {{node.name}}

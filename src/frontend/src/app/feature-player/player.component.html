@@ -18,32 +18,44 @@
 
     <!--Buttons-->
     <div class="text-center w-1/2 flex justify-center items-center select-none gap-x-8">
-      <fa-icon class="text-4xl" [icon]="faBackwardStep" (click)="this.playPrevious()"></fa-icon>
+      <button mat-icon-button (click)="playPrevious()">
+        <mat-icon class="buttons-size">skip_previous</mat-icon>
+      </button>
       <ng-container *ngIf="this.playerService.playState() === 'playing'; else paused">
-        <fa-icon class="text-5xl" [icon]="faCirclePause" (click)="pause()"></fa-icon>
+        <button mat-icon-button (click)="pause()">
+          <mat-icon class="buttons-size">pause_circle</mat-icon>
+        </button>
       </ng-container>
       <ng-template #paused>
-        <fa-icon class="text-5xl" [icon]="faCirclePlay" (click)="play()"></fa-icon>
+        <button mat-icon-button (click)="play()">
+          <mat-icon class="buttons-size">play_circle</mat-icon>
+        </button>
       </ng-template>
-      <fa-icon class="text-4xl" [icon]="faForwardStep" (click)="this.playNext()"></fa-icon>
+      <button mat-icon-button (click)="this.playNext()">
+        <mat-icon class="buttons-size">skip_next</mat-icon>
+      </button>
     </div>
 
     <div class="text-center w-1/4 flex justify-around items-center text-2xl space-x-4 select-none">
       <div [ngSwitch]="playerService.repeatType()">
         <ng-template [ngSwitchCase]="'repeat-1'">
-          <button mat-button (click)="setRepeat('repeat-none')"> repeat one </button>
+          <button mat-icon-button (click)="setRepeat('repeat-none')">
+            <mat-icon class="buttons-size">repeat_one</mat-icon>
+          </button>
         </ng-template>
         <ng-template [ngSwitchCase]="'repeat-none'">
-          <button mat-button (click)="setRepeat('repeat-all')"> repeat none </button>
+          <button mat-icon-button (click)="setRepeat('repeat-all')">
+            <mat-icon class="buttons-size fill-gray-500">repeat</mat-icon>
+          </button>
         </ng-template>
         <ng-template [ngSwitchCase]="'repeat-all'">
-          <button mat-button (click)="setRepeat('repeat-1')"> repeat all </button>
+          <button mat-icon-button (click)="setRepeat('repeat-1')">
+            <mat-icon class="buttons-size">repeat</mat-icon>
+          </button>
         </ng-template>
       </div>
-      <fa-icon class="text-4xl" [icon]="faRepeat"></fa-icon>
-      <fa-icon class="text-4xl" [icon]="faShuffle"></fa-icon>
       <fa-icon class="text-4xl" [icon]="faVolumeHigh"></fa-icon>
-      <mat-slider min="0" max="1" step="0.01">
+      <mat-slider [min]="0" [max]="1" [step]="0.1">
         <input matSliderThumb type="number" [(ngModel)]="this.currentVolume">
       </mat-slider>
     </div>

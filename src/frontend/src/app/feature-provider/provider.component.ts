@@ -97,4 +97,9 @@ export class ProviderComponent implements OnInit {
   addSongToPlaylist(file: Song, playlistId: string) {
     this.playlistsService.addSongToPlaylist(playlistId, file.id)
   }
+
+  async playSong(song: Song)
+  {
+    await this.playerService.playSongs([song])
+  }
 }

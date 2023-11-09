@@ -1,12 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Core.Models;
 
 public class User
 {
-    [Key]
     public Guid Id { get; set; }
 
     public string Email { get; set; } = null!;

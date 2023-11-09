@@ -1,7 +1,5 @@
 import {computed, Injectable, signal} from "@angular/core";
 import {Song} from "../models/song.model";
-import {Playlist} from "../models/playlist.model";
-import {DataProvider} from "../models/data-provider.model";
 
 @Injectable({
   providedIn: 'root'
@@ -10,12 +8,12 @@ export class QueueService {
   private readonly _queue = signal<Song[]>([])
   private readonly _currentSongIndex = signal<number>(0)
 
-  public readonly queue = computed(() => this._queue())
+  public readonly queue = this._queue.asReadonly();
   public readonly songsLeft = computed(() =>  this._queue().length - this._currentSongIndex())
+  public readonly currentIndex = this._currentSongIndex.asReadonly()
 
   public getNextSong() {
     const currentIndex = this._currentSongIndex();
-    const song = this._queue()[currentIndex];
 
     if (currentIndex === this._queue().length - 1) {
       this._currentSongIndex.set(0)
@@ -23,7 +21,7 @@ export class QueueService {
       this._currentSongIndex.set(currentIndex + 1)
     }
 
-    return song
+    return this._queue()[this._currentSongIndex()];
   }
 
   public getPreviousSong() {
@@ -42,16 +40,23 @@ export class QueueService {
     return queue[currentIndex]
   }
 
-  public addToQueue(source: DataProvider | Playlist) {
-    if (source.songFiles)
+  public getSongByIndex(index: number) {
+    if (index < 0 || index > this._queue().length)
     {
-      this._queue.set(source.songFiles)
-      this._currentSongIndex.set(0)
+      return
     }
+
+    const song = this._queue()[index];
+    this._currentSongIndex.set(index)
+
+    return song
   }
 
-  public addSongToQueue(source: Song) {
-    this._queue.set([source])
-    this._currentSongIndex.set(0)
+  public addToQueue(songs: Song[], index: number = 0) {
+    if (songs)
+    {
+      this._queue.set(songs)
+      this._currentSongIndex.set(index)
+    }
   }
 }

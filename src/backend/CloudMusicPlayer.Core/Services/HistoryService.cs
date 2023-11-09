@@ -26,24 +26,29 @@ public sealed class HistoryService
 
         if (history is null)
         {
-            return Result.Failure<History>("History was not found");
+            return Result.Failure<History>(DomainErrors.NotFound);
         }
 
         if (history.UserId != userId)
         {
-            return Result.Failure<History>("User is not the owner of the History");
+            return Result.Failure<History>(DomainErrors.NotTheOwner);
         }
 
-        var item = new HistoryItem() { HistoryId = history.Id, SongFileId = songFileId, AddedAt = DateTimeOffset.UtcNow };
+        var itemCreationResult = HistoryItem.Create(history.Id, songFileId);
 
-        var result = await _unitOfWork.HistoryItemRepository.AddAsync(item, true);
-
-        if (result.IsFailure)
+        if (itemCreationResult.IsFailure)
         {
-            return Result.Failure<History>(result.Error);
+            return Result.Failure<History>(DomainErrors.CantBeCreated);
         }
 
-        history.HistoryItems.Add(item);
+        var addResult = await _unitOfWork.HistoryItemRepository.AddAsync(itemCreationResult.Value, true);
+
+        if (addResult.IsFailure)
+        {
+            return Result.Failure<History>(addResult.Error);
+        }
+
+        history.HistoryItems.Add(itemCreationResult.Value);
 
         return Result.Success(history);
     }

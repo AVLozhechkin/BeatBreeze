@@ -40,13 +40,13 @@ export class PlaylistComponent implements OnInit {
     this.playlistService.fetchPlaylist(id!);
   }
 
-  play(playlistItem: Song) {
-    this.playerService.playSong(playlistItem);
+  async play(playlistItem: Song) {
+    await this.playerService.playSongs([playlistItem]);
   }
 
-  playAll() {
+  async playAll() {
     const playlist = this.playlistService.playlist()!;
-    this.playerService.playSongs(playlist);
+    await this.playerService.playSongs(playlist.songFiles);
   }
 
   remove(playlistItem: Song) {

@@ -1,10 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace CloudMusicPlayer.Core.Models;
+﻿namespace CloudMusicPlayer.Core.Models;
 
 public record PlaylistItem
 {
-    [Key]
     public Guid Id { get; set; }
 
     public Playlist Playlist { get; set; } = null!;

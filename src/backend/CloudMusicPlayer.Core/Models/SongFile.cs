@@ -1,10 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace CloudMusicPlayer.Core.Models;
+﻿namespace CloudMusicPlayer.Core.Models;
 
 public record SongFile
 {
-    [Key]
     public Guid Id { get; set; }
     public DataProvider? DataProvider { get; set; }
     public Guid DataProviderId { get; set; }

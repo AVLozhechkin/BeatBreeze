@@ -2,7 +2,7 @@
 
 namespace CloudMusicPlayer.Core.DataProviders;
 
-public record AccessTokenResult
+public record AccessToken
 {
     [JsonPropertyName("access_token")]
     public string Token { get; set; } = string.Empty;

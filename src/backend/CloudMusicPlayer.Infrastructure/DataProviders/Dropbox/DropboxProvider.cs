@@ -3,6 +3,7 @@ using CloudMusicPlayer.Core.DataProviders;
 using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Infrastructure.DataProviders.Dropbox.Args;
 using CloudMusicPlayer.Infrastructure.DataProviders.Dropbox.Results;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Options;
 
 namespace CloudMusicPlayer.Infrastructure.DataProviders.Dropbox;
@@ -30,7 +31,7 @@ internal sealed class DropboxProvider : IExternalProviderService
         return providerType == ProviderTypes.Dropbox;
     }
 
-    public async Task<IReadOnlyList<SongFile>> GetSongFiles(DataProvider provider)
+    public async Task<Result<IReadOnlyList<SongFile>>> GetSongFiles(DataProvider provider)
     {
         var httpClient = _httpClientFactory.CreateClient();
 
@@ -83,7 +84,7 @@ internal sealed class DropboxProvider : IExternalProviderService
         return songFiles;
     }
 
-    public async Task<string?> GetSongFileUrl(SongFile songFile, DataProvider provider)
+    public async Task<Result<string>> GetSongFileUrl(SongFile songFile, DataProvider provider)
     {
         var httpClient = _httpClientFactory.CreateClient();
 
@@ -93,15 +94,21 @@ internal sealed class DropboxProvider : IExternalProviderService
         {
             Path = songFile.Path
         };
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync(TemporaryLinkUrl, body);
 
-        var response = await httpClient.PostAsJsonAsync(TemporaryLinkUrl, body);
+            var temporaryLink = await response.Content.ReadFromJsonAsync<TemporaryLinkResult>();
 
-        var temporaryLink = await response.Content.ReadFromJsonAsync<TemporaryLinkResult>();
-
-        return temporaryLink?.Link;
+            return temporaryLink?.Link;
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<string>("");
+        }
     }
 
-    public async Task<AccessTokenResult?> GetApiToken(string refreshToken)
+    public async Task<Result<AccessToken>> GetApiToken(string refreshToken)
     {
         var httpClient = _httpClientFactory.CreateClient();
 
@@ -114,7 +121,7 @@ internal sealed class DropboxProvider : IExternalProviderService
         };
 
         var response = await httpClient.PostAsync(RefreshAccessTokenUrl, new FormUrlEncodedContent(args));
-        var accessToken = await response.Content.ReadFromJsonAsync<AccessTokenResult>();
+        var accessToken = await response.Content.ReadFromJsonAsync<AccessToken>();
 
         return accessToken;
 

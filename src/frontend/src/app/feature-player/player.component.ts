@@ -3,21 +3,15 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
 import {
-  faBackwardStep,
-  faForwardStep,
   faRepeat,
   faShuffle,
   faVolumeHigh,
-  faCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { MatIconModule } from '@angular/material/icon';
-import {
-  faCirclePause,
-  faCirclePlay,
-} from '@fortawesome/free-regular-svg-icons';
 import { NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { PlayerService, RepeatType } from '../shared/services/player.service';
 import { MatButtonModule } from '@angular/material/button';
+import {lastValueFrom} from "rxjs";
 
 @Component({
   standalone: true,
@@ -33,16 +27,12 @@ import { MatButtonModule } from '@angular/material/button';
     MatButtonModule,
   ],
   templateUrl: './player.component.html',
+  styles: ['.buttons-size { transform: scale(2)}']
 })
 export class PlayerComponent {
   protected readonly playerService = inject(PlayerService);
   protected currentVolume = 0.1;
 
-  protected readonly faCircle = faCircle;
-  protected readonly faCirclePlay = faCirclePlay;
-  protected readonly faCirclePause = faCirclePause;
-  protected readonly faForwardStep = faForwardStep;
-  protected readonly faBackwardStep = faBackwardStep;
   protected readonly faRepeat = faRepeat;
   protected readonly faShuffle = faShuffle;
   protected readonly faVolumeHigh = faVolumeHigh;
@@ -54,12 +44,12 @@ export class PlayerComponent {
     this.playerService.setSeek(width, event.clientX);
   }
 
-  playPrevious() {
-    this.playerService.playPrevious();
+  async playPrevious() {
+    await this.playerService.playPrevious();
   }
 
-  playNext() {
-    this.playerService.playNext();
+  async playNext() {
+    await this.playerService.playNext();
   }
 
   play() {
@@ -72,4 +62,6 @@ export class PlayerComponent {
   setRepeat(repeat: RepeatType) {
     this.playerService.setRepeatType(repeat);
   }
+
+  protected readonly lastValueFrom = lastValueFrom;
 }

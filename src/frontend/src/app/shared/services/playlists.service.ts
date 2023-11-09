@@ -33,7 +33,8 @@ export class PlaylistsService {
           this._playlists.mutate(playlists => {
             if (playlists)
               playlists.push(createdPlaylist)
-            playlists = [createdPlaylist]
+            else
+              playlists = [createdPlaylist]
           });
 
           this._isLoading.set(false);

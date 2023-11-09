@@ -2,6 +2,7 @@
 using CloudMusicPlayer.Core.DataProviders;
 using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Infrastructure.DataProviders.Yandex.Results;
+using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Options;
 
 namespace CloudMusicPlayer.Infrastructure.DataProviders.Yandex;
@@ -29,7 +30,7 @@ internal sealed class YandexDiskProvider : IExternalProviderService
         return providerType == ProviderTypes.Yandex;
     }
 
-    public async Task<IReadOnlyList<SongFile>> GetSongFiles(DataProvider provider)
+    public async Task<Result<IReadOnlyList<SongFile>>> GetSongFiles(DataProvider provider)
     {
         using var httpClient = _httpClientFactory.CreateClient();
 
@@ -49,7 +50,7 @@ internal sealed class YandexDiskProvider : IExternalProviderService
         return songFiles;
     }
 
-    public async Task<string?> GetSongFileUrl(SongFile songFile, DataProvider provider)
+    public async Task<Result<string>> GetSongFileUrl(SongFile songFile, DataProvider provider)
     {
         var httpClient = _httpClientFactory.CreateClient();
 
@@ -60,7 +61,7 @@ internal sealed class YandexDiskProvider : IExternalProviderService
         return response?.Link;
     }
 
-    public async Task<AccessTokenResult?> GetApiToken(string refreshToken)
+    public async Task<Result<AccessToken>> GetApiToken(string refreshToken)
     {
         var httpClient = _httpClientFactory.CreateClient();
 
@@ -73,7 +74,7 @@ internal sealed class YandexDiskProvider : IExternalProviderService
         };
 
         var response = await httpClient.PostAsync(RefreshAccessTokenUrl, new FormUrlEncodedContent(args));
-        var accessToken = await response.Content.ReadFromJsonAsync<AccessTokenResult>();
+        var accessToken = await response.Content.ReadFromJsonAsync<AccessToken>();
 
         return accessToken;
     }
