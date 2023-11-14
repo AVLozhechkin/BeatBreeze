@@ -1,4 +1,4 @@
-﻿using CSharpFunctionalExtensions;
+﻿using CloudMusicPlayer.Core.Errors;
 
 namespace CloudMusicPlayer.Core.Models;
 
@@ -15,7 +15,7 @@ public record DataProvider
     public string AccessToken { get; set; } = string.Empty;
     public DateTimeOffset AccessTokenExpiresAt { get; set; }
     public string RefreshToken { get; init; } = string.Empty;
-    public ICollection<SongFile> SongFiles { get; init; } = null!;
+    public IReadOnlyList<SongFile> SongFiles { get; init; } = null!;
 
     public static Result<DataProvider> Create(
         string name,
@@ -27,15 +27,14 @@ public record DataProvider
     {
         if (string.IsNullOrWhiteSpace(apiToken))
         {
-            return Result.Failure<DataProvider>("Api token is null or whitespace");
+            return Result.Failure<DataProvider>(DomainLayerErrors.DataProvider.ApiTokenIsNullOrEmpty());
         }
 
         var currentDate = DateTimeOffset.UtcNow;
         if (!DateTimeOffset.TryParse(expiresAt, out var expires))
         {
-            return Result.Failure<DataProvider>("Api token expiring time can't be parsed");
+            return Result.Failure<DataProvider>(DomainLayerErrors.DataProvider.ApiTokenExpireTokenCantBeParsed());
         }
-
 
         var provider = new DataProvider()
         {

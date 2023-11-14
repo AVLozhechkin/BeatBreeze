@@ -1,8 +1,10 @@
-﻿using CloudMusicPlayer.Core.Repositories;
+﻿using CloudMusicPlayer.Core;
+using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Core.UnitOfWorks;
 using CloudMusicPlayer.Infrastructure.Database;
+using CloudMusicPlayer.Infrastructure.Errors;
 using CloudMusicPlayer.Infrastructure.Repositories;
-using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Infrastructure.UnitOfWorks;
 
@@ -49,9 +51,8 @@ internal sealed class UnitOfWork : IUnitOfWork
         }
         catch (Exception ex)
         {
-            //Log Exception Handling message
             await dbContextTransaction.RollbackAsync();
-            return Result.Failure(ex.Message);
+            return Result.Failure(DataLayerErrors.Database.TransactionError());
         }
 
         return Result.Success();

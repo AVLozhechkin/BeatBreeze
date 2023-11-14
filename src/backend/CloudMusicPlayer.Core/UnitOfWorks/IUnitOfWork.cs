@@ -1,5 +1,5 @@
-﻿using CloudMusicPlayer.Core.Repositories;
-using CSharpFunctionalExtensions;
+﻿using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Repositories;
 
 namespace CloudMusicPlayer.Core.UnitOfWorks;
 
@@ -12,6 +12,5 @@ public interface IUnitOfWork
     public IDataProviderRepository DataProviderRepository { get; }
     public ISongFileRepository SongFileRepository { get; }
     public IPlaylistRepository PlaylistRepository { get; }
-
     public Task<Result> CommitAsync();
 }

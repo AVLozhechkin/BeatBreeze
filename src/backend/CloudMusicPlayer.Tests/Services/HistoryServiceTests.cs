@@ -2,7 +2,6 @@
 using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Services;
 using CloudMusicPlayer.Core.UnitOfWorks;
-using CSharpFunctionalExtensions;
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
 using Xunit;
@@ -17,6 +16,7 @@ public class HistoryServiceTests
         // Arrange
         var unitOfWorkMock = Substitute.For<IUnitOfWork>();
         var history = new History() { UserId = Guid.NewGuid() };
+        var historyResult =
 
         unitOfWorkMock
             .HistoryRepository

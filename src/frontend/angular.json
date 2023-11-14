@@ -66,10 +66,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "cloud-music-player:build:production"
+              "buildTarget": "cloud-music-player:build:production"
             },
             "development": {
-              "browserTarget": "cloud-music-player:build:development"
+              "buildTarget": "cloud-music-player:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -77,7 +77,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "cloud-music-player:build"
+            "buildTarget": "cloud-music-player:build"
           }
         },
         "test": {
@@ -98,24 +98,6 @@
               "src/styles.scss"
             ],
             "scripts": []
-          }
-        },
-        "storybook": {
-          "builder": "@storybook/angular:start-storybook",
-          "options": {
-            "configDir": ".storybook",
-            "browserTarget": "cloud-music-player:build",
-            "compodoc": false,
-            "port": 6006
-          }
-        },
-        "build-storybook": {
-          "builder": "@storybook/angular:build-storybook",
-          "options": {
-            "configDir": ".storybook",
-            "browserTarget": "cloud-music-player:build",
-            "compodoc": false,
-            "outputDir": "storybook-static"
           }
         }
       }

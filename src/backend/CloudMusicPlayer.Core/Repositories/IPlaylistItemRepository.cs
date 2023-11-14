@@ -1,5 +1,5 @@
-﻿using CloudMusicPlayer.Core.Models;
-using CSharpFunctionalExtensions;
+﻿using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Models;
 
 namespace CloudMusicPlayer.Core.Repositories;
 

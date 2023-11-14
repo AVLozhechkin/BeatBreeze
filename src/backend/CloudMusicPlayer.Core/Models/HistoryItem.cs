@@ -1,10 +1,10 @@
-﻿using CSharpFunctionalExtensions;
+﻿using CloudMusicPlayer.Core.Errors;
 
 namespace CloudMusicPlayer.Core.Models;
 
 public record HistoryItem
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
     public Guid HistoryId { get; set; }
     public History History { get; set; } = null!;
     public Guid SongFileId { get; set; }
@@ -13,11 +13,13 @@ public record HistoryItem
 
     public static Result<HistoryItem> Create(Guid historyId, Guid songFileId)
     {
-        return new HistoryItem()
+        var history = new HistoryItem()
         {
             HistoryId = historyId,
             SongFileId = songFileId,
             AddedAt = DateTimeOffset.UtcNow
         };
+
+        return Result.Success(history);
     }
 }

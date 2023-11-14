@@ -1,8 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { ProvidersApiClient } from '../shared/services/api/providers-api-client';
-import {DataProvider} from "../shared/models/data-provider.model";
-import {ProviderTypes} from "../shared/models/provider-types.model";
-
+import { DataProvider } from '../shared/models/data-provider.model';
+import { ProviderTypes } from '../shared/models/provider-types.model';
 
 @Injectable({
   providedIn: 'root',
@@ -32,15 +31,17 @@ export class ProvidersService {
     this._isLoading.set(true);
     this.providersApiClient.updateProvider(providerId).subscribe({
       next: (provider) => {
-        this._providers.mutate((providers) => {
+        this._providers.update((providers) => {
           const index = providers.findIndex((p) => p.id === provider.id);
 
           if (index < 0) {
             // refresh?
-            return;
+            return providers;
           }
 
           providers[index] = provider;
+
+          return providers;
         });
         this._isLoading.set(false);
       },

@@ -1,8 +1,10 @@
 ﻿using System.Security.Claims;
 using System.Text.RegularExpressions;
+using CloudMusicPlayer.API.Errors;
+using CloudMusicPlayer.Core;
+using CloudMusicPlayer.Core.Errors;
 using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Services;
-using CSharpFunctionalExtensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -39,23 +41,28 @@ public sealed class AuthService
 
         await SignInWithCookies(httpContext, userCreationResult.Value);
 
-        return userCreationResult.Value;
+        return userCreationResult;
     }
 
     public async Task<Result<User>> SignIn(HttpContext httpContext, string email, string password)
     {
         var userSearchResult = await _userService.GetUserByEmail(email);
 
-        if (userSearchResult.IsFailure || userSearchResult.Value is null)
+        if (userSearchResult.IsFailure)
         {
-            return Result.Failure<User>("User was not found");
+            return userSearchResult;
+        }
+
+        if (userSearchResult.Value is null)
+        {
+            return Result.Failure<User>(DomainLayerErrors.NotFound());
         }
 
         var verificationResult = _hasher.VerifyHashedPassword(null!, userSearchResult.Value.PasswordHash, password);
 
         if (verificationResult == PasswordVerificationResult.Failed)
         {
-            return Result.Failure<User>("Password is wrong");
+            return Result.Failure<User>(ApplicationLayerErrors.Auth.PasswordVerificationFailure());
         }
 
         await SignInWithCookies(httpContext, userSearchResult.Value);
@@ -98,7 +105,6 @@ public sealed class AuthService
             return Result.Success();
         }
 
-        return Result.Failure("Password must contain at least one digit, one lowercase character, one uppercase character, " +
-                              "one special character, at least 8 characters in length, but no more than 32");
+        return Result.Failure(ApplicationLayerErrors.Auth.PasswordDoesNotMeetRequirements());
     }
 }

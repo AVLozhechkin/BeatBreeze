@@ -1,7 +1,9 @@
-﻿using CloudMusicPlayer.Core.Models;
+﻿using CloudMusicPlayer.Core;
+using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
-using CSharpFunctionalExtensions;
+using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
@@ -21,7 +23,7 @@ internal sealed class PlaylistItemRepository : IPlaylistItemRepository
 
         if (saveChanges)
         {
-            return await _applicationContext.SaveChangesResult("Playlist Item was not added");
+            return await _applicationContext.SaveChangesResult();
         }
 
         return Result.Success();
@@ -34,18 +36,26 @@ internal sealed class PlaylistItemRepository : IPlaylistItemRepository
             var toBeDeleted = _applicationContext.PlaylistItems
                 .Where(pi => pi.Id == playlistItemId).Take(1);
 
-            return await _applicationContext.ExecuteDeleteResult(toBeDeleted, "Playlist Item was not deleted");
+            return await _applicationContext.ExecuteDeleteResult(toBeDeleted);
         }
 
-        var playlistItem = await _applicationContext.PlaylistItems.FirstOrDefaultAsync(pi => pi.Id == playlistItemId);
-
-        if (playlistItem is null)
+        try
         {
-            return Result.Failure("Playlist Item was not found");
+            var playlistItem =
+                await _applicationContext.PlaylistItems.FirstOrDefaultAsync(pi => pi.Id == playlistItemId);
+
+            if (playlistItem is null)
+            {
+                return Result.Failure(DataLayerErrors.Database.NotFound());
+            }
+
+            _applicationContext.PlaylistItems.Remove(playlistItem);
+
+            return Result.Success();
         }
-
-        _applicationContext.PlaylistItems.Remove(playlistItem);
-
-        return Result.Success();
+        catch (Exception ex)
+        {
+            return Result.Failure(DataLayerErrors.Database.DeleteError());
+        }
     }
 }

@@ -5,11 +5,11 @@ namespace CloudMusicPlayer.Infrastructure.DataProviders.Dropbox.Results;
 internal record ListFolderResult
 {
     [JsonPropertyName("entries")]
-    public IList<Metadata> Entries { get; set; }
+    public required IList<Metadata> Entries { get; set; }
 
-    [JsonPropertyName("hasMore")]
-    public bool HasMore { get; set; }
+    [JsonPropertyName("has_more")]
+    public required bool HasMore { get; set; }
 
     [JsonPropertyName("cursor")]
-    public string Cursor { get; set; }
+    public required string Cursor { get; set; }
 }

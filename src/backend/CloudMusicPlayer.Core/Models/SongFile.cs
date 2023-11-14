@@ -3,7 +3,7 @@
 public record SongFile
 {
     public Guid Id { get; set; }
-    public DataProvider? DataProvider { get; set; }
+    public DataProvider DataProvider { get; set; }
     public Guid DataProviderId { get; set; }
     public required string Name { get; set; }
     public required string FileId { get; set; }

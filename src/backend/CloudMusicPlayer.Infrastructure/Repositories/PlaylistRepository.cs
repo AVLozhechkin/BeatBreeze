@@ -1,7 +1,9 @@
-﻿using CloudMusicPlayer.Core.Models;
+﻿using CloudMusicPlayer.Core;
+using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
-using CSharpFunctionalExtensions;
+using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
@@ -15,7 +17,7 @@ internal sealed class PlaylistRepository : IPlaylistRepository
         _applicationContext = applicationContext;
     }
 
-    public async Task<Playlist?> GetByIdAsync(Guid playlistId, bool includeSongFiles, bool asNoTracking = true)
+    public async Task<Result<Playlist?>> GetByIdAsync(Guid playlistId, bool includeSongFiles, bool asNoTracking = true)
     {
         var query = _applicationContext.Playlists.AsQueryable();
 
@@ -30,10 +32,19 @@ internal sealed class PlaylistRepository : IPlaylistRepository
             query = query.AsNoTracking();
         }
 
-        return await query.FirstOrDefaultAsync(pl => pl.Id == playlistId);
+        try
+        {
+            var playlist = await query.FirstOrDefaultAsync(pl => pl.Id == playlistId);
+
+            return Result.Success<Playlist?>(playlist);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<Playlist?>(DataLayerErrors.Database.GetError());
+        }
     }
 
-    public async Task<List<Playlist>> GetAllByUserIdAsync(Guid userId, bool includeSongFiles, bool asNoTracking = true)
+    public async Task<Result<List<Playlist>>> GetAllByUserIdAsync(Guid userId, bool includeSongFiles, bool asNoTracking = true)
     {
         var query = _applicationContext.Playlists.AsQueryable();
 
@@ -48,19 +59,26 @@ internal sealed class PlaylistRepository : IPlaylistRepository
             query = query.AsNoTracking();
         }
 
-        return await query.Where(pl => pl.UserId == userId).ToListAsync();
+        try
+        {
+            var playlists = await query.Where(pl => pl.UserId == userId).ToListAsync();
+
+            return Result.Success(playlists);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<List<Playlist>>(DataLayerErrors.Database.GetError());
+        }
     }
 
     public async Task<Result> AddAsync(Playlist playlist, bool saveChanges = false)
     {
+        await _applicationContext.Playlists.AddAsync(playlist);
+
         if (saveChanges)
         {
-            await _applicationContext.Playlists.AddAsync(playlist);
-
-            return await _applicationContext.SaveChangesResult("Playlist was not added");
+            return await _applicationContext.SaveChangesResult();
         }
-
-        await _applicationContext.Playlists.AddAsync(playlist);
 
         return Result.Success();
     }
@@ -73,8 +91,7 @@ internal sealed class PlaylistRepository : IPlaylistRepository
 
             return await _applicationContext.ExecuteUpdateResult(toBeUpdated, s =>
                     s.SetProperty(p => p.Name, playlist.Name)
-                        .SetProperty(p => p.UpdatedAt, playlist.UpdatedAt),
-                "Data provider was not updated");
+                        .SetProperty(p => p.UpdatedAt, playlist.UpdatedAt));
         }
 
         _applicationContext.Playlists.Update(playlist);
@@ -89,14 +106,14 @@ internal sealed class PlaylistRepository : IPlaylistRepository
             var toBeDeleted = _applicationContext.Playlists
                 .Where(p => p.Id == playlistId && p.UserId == ownerId).Take(1);
 
-            return await _applicationContext.ExecuteDeleteResult(toBeDeleted, "Playlist was not deleted");
+            return await _applicationContext.ExecuteDeleteResult(toBeDeleted);
         }
 
         var playlist = await _applicationContext.Playlists.FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == ownerId);
 
         if (playlist is null)
         {
-            return Result.Failure("Playlist was not found");
+            return Result.Failure(DataLayerErrors.Database.NotFound());
         }
 
         _applicationContext.Playlists.Remove(playlist);

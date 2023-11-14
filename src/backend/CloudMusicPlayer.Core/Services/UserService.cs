@@ -1,6 +1,6 @@
-﻿using CloudMusicPlayer.Core.Models;
+﻿using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Repositories;
-using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Core.Services;
 
@@ -35,15 +35,15 @@ public sealed class UserService
 
     public async Task<Result<User?>> GetUserById(Guid userId)
     {
-        var user = await _userRepository.GetByIdAsync(userId);
+        var userResult = await _userRepository.GetByIdAsync(userId);
 
-        return Result.Success(user);
+        return userResult;
     }
 
     public async Task<Result<User?>> GetUserByEmail(string email)
     {
-        var user = await _userRepository.GetByEmailAsync(email);
+        var userResult = await _userRepository.GetByEmailAsync(email);
 
-        return Result.Success(user);
+        return userResult;
     }
 }

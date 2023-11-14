@@ -1,41 +1,24 @@
-import { Component, inject } from '@angular/core';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
-import {
-  faRepeat,
-  faShuffle,
-  faVolumeHigh,
-} from '@fortawesome/free-solid-svg-icons';
 import { MatIconModule } from '@angular/material/icon';
-import { NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { PlayerService, RepeatType } from '../shared/services/player.service';
 import { MatButtonModule } from '@angular/material/button';
-import {lastValueFrom} from "rxjs";
+import { lastValueFrom } from 'rxjs';
+import { QueueService } from '../shared/services/queue.service';
 
 @Component({
   standalone: true,
   selector: 'cmp-player',
-  imports: [
-    FontAwesomeModule,
-    MatSliderModule,
-    FormsModule,
-    MatIconModule,
-    NgIf,
-    NgSwitch,
-    NgSwitchCase,
-    MatButtonModule,
-  ],
+  imports: [MatSliderModule, FormsModule, MatIconModule, MatButtonModule],
   templateUrl: './player.component.html',
-  styles: ['.buttons-size { transform: scale(2)}']
+  styles: ['.buttons-size { transform: scale(2)}'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PlayerComponent {
   protected readonly playerService = inject(PlayerService);
-  protected currentVolume = 0.1;
-
-  protected readonly faRepeat = faRepeat;
-  protected readonly faShuffle = faShuffle;
-  protected readonly faVolumeHigh = faVolumeHigh;
+  protected readonly queueService = inject(QueueService);
+  public currentVolume = 0.1;
 
   setSeek(event: MouseEvent) {
     const { width } = (
@@ -61,6 +44,25 @@ export class PlayerComponent {
 
   setRepeat(repeat: RepeatType) {
     this.playerService.setRepeatType(repeat);
+  }
+
+  shuffle() {
+    this.queueService.shuffle();
+  }
+
+  unshuffle() {
+    this.queueService.unshuffle();
+  }
+
+  unmute() {
+    this.playerService.unmute();
+  }
+  mute() {
+    this.playerService.mute();
+  }
+
+  updateVolume() {
+    this.playerService.setVolume(this.currentVolume);
   }
 
   protected readonly lastValueFrom = lastValueFrom;

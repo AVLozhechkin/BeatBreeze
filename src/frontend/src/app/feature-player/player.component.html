@@ -10,54 +10,86 @@
 
   <div class="flex items-center p-3">
     <span class="w-1/4 text-lime-300">
-      <ng-container *ngIf="this.playerService.song(); else defaultSongDescription">
-        {{this.playerService.song()?.name}}
-      </ng-container>
-      <ng-template #defaultSongDescription>SongModel by artist</ng-template>
+      @if (this.playerService.song()) {
+      {{
+      this.playerService.song()?.name
+      }}
+      } @else {
+      SongModel by artist
+      }
     </span>
 
     <!--Buttons-->
     <div class="text-center w-1/2 flex justify-center items-center select-none gap-x-8">
+      @if (this.queueService.queue().length > 1) {
       <button mat-icon-button (click)="playPrevious()">
         <mat-icon class="buttons-size">skip_previous</mat-icon>
       </button>
-      <ng-container *ngIf="this.playerService.playState() === 'playing'; else paused">
-        <button mat-icon-button (click)="pause()">
-          <mat-icon class="buttons-size">pause_circle</mat-icon>
-        </button>
-      </ng-container>
-      <ng-template #paused>
-        <button mat-icon-button (click)="play()">
-          <mat-icon class="buttons-size">play_circle</mat-icon>
-        </button>
-      </ng-template>
+      }
+      @if (this.playerService.playState() === 'playing') {
+      <button mat-icon-button (click)="pause()">
+        <mat-icon class="buttons-size">pause_circle</mat-icon>
+      </button>
+      } @else {
+      <button mat-icon-button (click)="play()">
+        <mat-icon class="buttons-size">play_circle</mat-icon>
+      </button>
+      }
+      @if (this.queueService.queue().length > 1) {
       <button mat-icon-button (click)="this.playNext()">
         <mat-icon class="buttons-size">skip_next</mat-icon>
       </button>
+      }
     </div>
 
-    <div class="text-center w-1/4 flex justify-around items-center text-2xl space-x-4 select-none">
-      <div [ngSwitch]="playerService.repeatType()">
-        <ng-template [ngSwitchCase]="'repeat-1'">
-          <button mat-icon-button (click)="setRepeat('repeat-none')">
-            <mat-icon class="buttons-size">repeat_one</mat-icon>
+    <div class="text-center w-1/4 flex justify-around items-center text-2xl space-x-2 select-none">
+      @switch (playerService.repeatType()) {
+      @case ('repeat-1') {
+      <button mat-icon-button (click)="setRepeat('repeat-none')">
+        <mat-icon class="buttons-size">repeat_one</mat-icon>
+      </button>
+      }
+      @case ('repeat-none') {
+      <button mat-icon-button (click)="setRepeat('repeat-all')">
+        <mat-icon class="buttons-size fill-gray-500" color="accent">repeat</mat-icon>
+      </button>
+      }
+      @case ('repeat-all') {
+      <button mat-icon-button (click)="setRepeat('repeat-1')">
+        <mat-icon class="buttons-size">repeat</mat-icon>
+      </button>
+      }
+      }
+      @if (queueService.isShuffled()) {
+      <button mat-icon-button (click)="unshuffle()" [disabled]="queueService.queue().length <= 1">
+        <mat-icon class="buttons-size">shuffle_on</mat-icon>
+      </button>
+      } @else {
+      <button mat-icon-button (click)="shuffle()" [disabled]="queueService.queue().length <= 1">
+        <mat-icon class="buttons-size">shuffle</mat-icon>
+      </button>
+      }
+      <div class="flex justify-around items-center text-2xl select-none">
+        @if (playerService.isMuted()) {
+        <button mat-icon-button (click)="unmute()">
+          <mat-icon class="buttons-size">volume_off</mat-icon>
+        </button>
+        } @else if (playerService.volume() === 0) {
+        <button mat-icon-button (click)="mute()">
+          <mat-icon class="buttons-size">volume_mute</mat-icon>
+        </button>
+        } @else if (playerService.volume() <= 0.5) { <button mat-icon-button (click)="mute()">
+          <mat-icon class="buttons-size">volume_down</mat-icon>
           </button>
-        </ng-template>
-        <ng-template [ngSwitchCase]="'repeat-none'">
-          <button mat-icon-button (click)="setRepeat('repeat-all')">
-            <mat-icon class="buttons-size fill-gray-500">repeat</mat-icon>
+          } @else {
+          <button mat-icon-button (click)="mute()">
+            <mat-icon class="buttons-size">volume_up</mat-icon>
           </button>
-        </ng-template>
-        <ng-template [ngSwitchCase]="'repeat-all'">
-          <button mat-icon-button (click)="setRepeat('repeat-1')">
-            <mat-icon class="buttons-size">repeat</mat-icon>
-          </button>
-        </ng-template>
+          }
+          <mat-slider [min]="0" [max]="1" [step]="0.05">
+            <input matSliderThumb [(ngModel)]="this.currentVolume" (input)="updateVolume()">
+          </mat-slider>
       </div>
-      <fa-icon class="text-4xl" [icon]="faVolumeHigh"></fa-icon>
-      <mat-slider [min]="0" [max]="1" [step]="0.1">
-        <input matSliderThumb type="number" [(ngModel)]="this.currentVolume">
-      </mat-slider>
     </div>
   </div>
 </div>

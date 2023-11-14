@@ -1,55 +1,70 @@
-import {computed, inject, Injectable, signal} from '@angular/core';
-import {User} from '../models/user.model';
-import { Observable, throwError} from 'rxjs';
-import {AuthApiClient} from "./api/auth-api-client";
-import {UsersApiClient} from "./api/users-api-client";
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { User } from '../models/user.model';
+import { lastValueFrom, Observable, throwError } from 'rxjs';
+import { AuthApiClient } from './api/auth-api-client';
+import { UsersApiClient } from './api/users-api-client';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private authApiClient: AuthApiClient = inject(AuthApiClient)
-  private usersApiClient: UsersApiClient = inject(UsersApiClient)
+  private authApiClient: AuthApiClient = inject(AuthApiClient);
+  private usersApiClient: UsersApiClient = inject(UsersApiClient);
 
-  private userLocalStorageKey: string = "CloudMusicPlayer_User"
+  private userLocalStorageKey: string = 'CloudMusicPlayer_User';
 
-  private readonly _user = signal<User | undefined>(undefined)
-  private readonly _isAuthenticated = signal<boolean>(false)
+  private readonly _user = signal<User | undefined>(undefined);
+  private readonly _isAuthenticated = signal<boolean>(false);
 
   public readonly user = computed(() => this._user());
-  public readonly isAuthenticated = computed(() => this._isAuthenticated())
+  public readonly isAuthenticated = computed(() => this._isAuthenticated());
 
-  login(email: string, password: string) {
-    this.authApiClient.login(email, password)
-      .subscribe({
-        next: (user: User) => {
-          this._user.set(user);
-          this._isAuthenticated.set(true);
-          this.saveUserIntoLocalStorage(user)
-        }
-      })
+  async login(email: string, password: string): Promise<User | undefined> {
+    const user = await lastValueFrom(
+      this.authApiClient.login(email, password)
+    ).catch((error) => {
+      // TODO Show error
+      console.log(error);
+    });
+
+    if (user) {
+      this._user.set(user);
+      this._isAuthenticated.set(true);
+      this.saveUserIntoLocalStorage(user);
+      return user;
+    }
+
+    return undefined;
   }
 
-  signUp(email: string, name: string, password: string, passwordConfirmation: string) {
-    this.authApiClient.signUp(email, name, password, passwordConfirmation)
-      .subscribe({
-        next: (user: User) => {
-          this._user.set(user);
-          this._isAuthenticated.set(true);
-          this.saveUserIntoLocalStorage(user)
-        }
-      })
+  async signUp(
+    email: string,
+    name: string,
+    password: string,
+    passwordConfirmation: string
+  ) {
+    const user = await lastValueFrom(
+      this.authApiClient.login(email, password)
+    ).catch((error) => {
+      // TODO Show error
+      console.log(error);
+    });
+
+    if (user) {
+      this._user.set(user);
+      this._isAuthenticated.set(true);
+      this.saveUserIntoLocalStorage(user);
+    }
   }
 
   logout() {
-    this.authApiClient.logout()
-      .subscribe({
-        next: () => {
-          this._user.set(undefined);
-          this._isAuthenticated.set(false);
-          this.removeUserFromLocalStorage()
-        }
-      })
+    this.authApiClient.logout().subscribe({
+      next: () => {
+        this._user.set(undefined);
+        this._isAuthenticated.set(false);
+        this.removeUserFromLocalStorage();
+      },
+    });
   }
 
   handleError(name: string, url: string, body: any): Observable<never> {
@@ -63,27 +78,25 @@ export class AuthService {
   }
 
   refresh() {
-    if (!document.cookie)
-    {
+    if (!document.cookie) {
       this._user.set(undefined);
       return;
     }
 
-    const userFromLocalStorage = this.loadUserFromLocalStorage()
+    const userFromLocalStorage = this.loadUserFromLocalStorage();
 
     if (userFromLocalStorage) {
       this._user.set(userFromLocalStorage);
       this._isAuthenticated.set(true);
     }
 
-    this.usersApiClient.getCurrentUser()
-      .subscribe({
-        next: (user: User) => {
-          this._user.set(user);
-          this._isAuthenticated.set(true);
-          this.saveUserIntoLocalStorage(user)
-        }
-      })
+    this.usersApiClient.getCurrentUser().subscribe({
+      next: (user: User) => {
+        this._user.set(user);
+        this._isAuthenticated.set(true);
+        this.saveUserIntoLocalStorage(user);
+      },
+    });
   }
 
   private saveUserIntoLocalStorage(user: User) {
@@ -91,17 +104,16 @@ export class AuthService {
   }
 
   private removeUserFromLocalStorage() {
-    window.localStorage.removeItem(this.userLocalStorageKey)
+    window.localStorage.removeItem(this.userLocalStorageKey);
   }
 
   private loadUserFromLocalStorage(): User | null {
-    let json = window.localStorage.getItem(this.userLocalStorageKey)
+    let json = window.localStorage.getItem(this.userLocalStorageKey);
 
-    if (json === null)
-    {
+    if (json === null) {
       return null;
     }
 
-    return JSON.parse(json)
+    return JSON.parse(json);
   }
 }

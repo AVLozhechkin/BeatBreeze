@@ -1,7 +1,7 @@
 ﻿using CloudMusicPlayer.Core.DataProviders;
+using CloudMusicPlayer.Core.Errors;
 using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.UnitOfWorks;
-using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Core.Services;
 
@@ -20,36 +20,50 @@ public sealed class ProviderService
 
     public async Task<Result<List<DataProvider>>> GetAllProvidersByUserId(Guid userId)
     {
-        var providers = await _unitOfWork.DataProviderRepository.GetAllByUserIdAsync(userId);
+        var providersResult = await _unitOfWork.DataProviderRepository.GetAllByUserIdAsync(userId);
 
-        return Result.Success(providers);
+        return providersResult;
     }
 
     public async Task<Result<DataProvider?>> GetDataProvider(Guid providerId, Guid userId)
     {
-        var provider = await _unitOfWork.DataProviderRepository.GetAsync(providerId, true);
+        var providerResult = await _unitOfWork.DataProviderRepository.GetAsync(providerId, true);
 
-        if (provider is not null && provider.UserId != userId)
+        if (providerResult.IsFailure)
         {
-            return Result.Failure<DataProvider?>("User is not the owner of the DataProvider");
+            return providerResult;
         }
 
-        return Result.Success(provider);
+        if (providerResult.Value is not null && providerResult.Value.UserId != userId)
+        {
+            return Result.Failure<DataProvider?>(DomainLayerErrors.NotTheOwner());
+        }
+
+        return providerResult;
     }
 
     public async Task<Result<string>> GetSongFileUrl(Guid songFileId, Guid userId)
     {
-        var songFile = await _unitOfWork.SongFileRepository.GetById(songFileId, true);
+        var songFileResult = await _unitOfWork.SongFileRepository.GetById(songFileId, true);
 
-        if (songFile?.DataProvider is null)
+        if (songFileResult.IsFailure)
         {
-            return Result.Failure<string>("SongFile not found");
+            return Result.Failure<string>(songFileResult.Error);
         }
 
-        if (songFile.DataProvider.UserId != userId)
+        if (songFileResult.Value?.DataProvider is null)
         {
-            return Result.Failure<string>("User is not the owner of the SongFile");
+            return Result.Failure<string>(DomainLayerErrors.NotFound());
         }
+
+        if (songFileResult.Value.DataProvider.UserId != userId)
+        {
+            return Result.Failure<string>(DomainLayerErrors.NotTheOwner());
+        }
+
+        var songFile = songFileResult.Value;
+
+        var dictionary = new Dictionary<string, string>();
 
         var externalProvider = _externalProviderServices
             .FirstOrDefault(ep
@@ -57,7 +71,7 @@ public sealed class ProviderService
 
         if (externalProvider is null)
         {
-            return Result.Failure<string>("External provider service not found");
+            return Result.Failure<string>(DomainLayerErrors.ExternalProviderNotFound());
         }
 
         Task<Result> updateDataProvider = null!;
@@ -69,7 +83,7 @@ public sealed class ProviderService
 
             if (apiTokenResult.IsFailure)
             {
-                return Result.Failure<string>("Api token is expired. Can't fetch the new one.");
+                return Result.Failure<string>(apiTokenResult.Error);
             }
 
             songFile.DataProvider.AccessToken = apiTokenResult.Value.Token;
@@ -78,21 +92,27 @@ public sealed class ProviderService
             updateDataProvider = _unitOfWork.DataProviderRepository.UpdateAsync(songFile.DataProvider, true);
         }
 
+        // TODO Review task awaiting here
+
         var urlResult = await externalProvider.GetSongFileUrl(songFile, songFile.DataProvider);
 
         if (urlResult.IsFailure)
         {
-            return Result.Failure<string>("Can't fetch song's url");
+            return urlResult; // TODO "Can't fetch song's url"
         }
 
-        if (updateDataProvider is not null)
+        if (updateDataProvider is null)
         {
-            var updateResult = await updateDataProvider;
-            if (updateResult.IsFailure)
-            {
-                return Result.Failure<string>("Data provider can't be updated");
-            }
+            return Result.Success(urlResult.Value);
         }
+
+
+        // TODO should I return failure on update? Because if we successfully got the link then token is okay. Review is needed.
+        var updateResult = await updateDataProvider;
+        /*if (updateResult.IsFailure)
+        {
+            return Result.Failure<string>(updateResult.Error);
+        }*/
 
         return Result.Success(urlResult.Value);
     }
@@ -105,6 +125,8 @@ public sealed class ProviderService
         string refreshToken,
         string expiresAt)
     {
+        // TODO Check the existing provider
+
         var dataProviderResult = DataProvider.Create(name, userId, providerType, apiToken, refreshToken, expiresAt);
 
         if (dataProviderResult.IsFailure)
@@ -122,7 +144,7 @@ public sealed class ProviderService
 
         if (songFilesResult.IsFailure)
         {
-            return Result.Failure<DataProvider>("An error occured when fetching song files");
+            return Result.Failure<DataProvider>(songFilesResult.Error);
         }
 
         await _unitOfWork.SongFileRepository.AddRangeAsync(songFilesResult.Value);
@@ -134,21 +156,28 @@ public sealed class ProviderService
             return Result.Failure<DataProvider>(commitResult.Error);
         }
 
-        return Result.Success(dataProviderResult.Value);
+        return dataProviderResult;
     }
 
     public async Task<Result<DataProvider>> UpdateDataProvider(Guid providerId, Guid userId)
     {
-        var provider = await _unitOfWork.DataProviderRepository.GetAsync(providerId, true, true);
+        var providerResult = await _unitOfWork.DataProviderRepository.GetAsync(providerId, true, true);
+
+        if (providerResult.IsFailure)
+        {
+            return providerResult;
+        }
+
+        var provider = providerResult.Value;
 
         if (provider is null)
         {
-            return Result.Failure<DataProvider>("DataProvider was not found");
+            return Result.Failure<DataProvider>(DomainLayerErrors.NotFound());
         }
 
         if (provider.UserId != userId)
         {
-            return Result.Failure<DataProvider>("User is not the owner of the DataProvider");
+            return Result.Failure<DataProvider>(DomainLayerErrors.NotTheOwner());
         }
 
         var externalProviderService = _externalProviderServices
@@ -169,7 +198,7 @@ public sealed class ProviderService
             return Result.Failure<DataProvider>(result.Error);
         }
 
-        return Result.Success(provider);
+        return providerResult;
     }
 
     public async Task<Result> RemoveDataProvider(Guid providerId, Guid userId)

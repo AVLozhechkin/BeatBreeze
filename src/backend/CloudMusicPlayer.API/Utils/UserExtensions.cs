@@ -1,5 +1,7 @@
 ﻿using System.Security.Claims;
-using CSharpFunctionalExtensions;
+using CloudMusicPlayer.API.Errors;
+using CloudMusicPlayer.Core;
+using CloudMusicPlayer.Core.Errors;
 
 namespace CloudMusicPlayer.API.Utils;
 
@@ -9,7 +11,7 @@ public static class UserExtensions
     {
         if (!Guid.TryParse(principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
         {
-            return Result.Failure<Guid>("UserId must be a parseable GUID");
+            return Result.Failure<Guid>(ApplicationLayerErrors.HttpContext.InvalidUserId());
         }
 
         return Result.Success(userId);

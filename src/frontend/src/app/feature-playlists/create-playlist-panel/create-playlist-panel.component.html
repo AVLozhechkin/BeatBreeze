@@ -1,5 +1,4 @@
-<mat-expansion-panel (opened)="panelOpenState = true"
-                     (closed)="panelOpenState = false">
+<mat-expansion-panel (opened)="panelOpenState = true" (closed)="panelOpenState = false">
   <mat-expansion-panel-header>
     <mat-panel-title>
       Create new Topic
@@ -9,12 +8,16 @@
     <mat-form-field class="w-full">
       <mat-label>Put Topic name here</mat-label>
       <input matInput type="text" [formControl]="playlistName">
-      <mat-error *ngIf="playlistName.hasError('required')">
+      @if (playlistName.hasError('required')) {
+      <mat-error>
         Please, provide a name for the topic
       </mat-error>
-      <mat-error *ngIf="!playlistName.hasError('required') && playlistName.hasError('minlength')">
+      }
+      @if (!playlistName.hasError('required') && playlistName.hasError('minlength')) {
+      <mat-error>
         Name must have at least 3 characters
       </mat-error>
+      }
     </mat-form-field>
     <button mat-flat-button color="primary" (click)="createTopic()">Create</button>
   </div>

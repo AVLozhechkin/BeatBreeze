@@ -1,7 +1,9 @@
-﻿using CloudMusicPlayer.Core.Models;
+﻿using CloudMusicPlayer.Core;
+using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
-using CSharpFunctionalExtensions;
+using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
@@ -15,7 +17,7 @@ internal sealed class SongFileRepository : ISongFileRepository
         _applicationContext = applicationContext;
     }
 
-    public async Task<SongFile?> GetById(Guid songFileId, bool includeDataProvider, bool asNoTracking = true)
+    public async Task<Result<SongFile?>> GetById(Guid songFileId, bool includeDataProvider, bool asNoTracking = true)
     {
         var query = _applicationContext.SongFiles.AsQueryable();
 
@@ -29,7 +31,16 @@ internal sealed class SongFileRepository : ISongFileRepository
             query = query.AsNoTracking();
         }
 
-        return await query.FirstOrDefaultAsync(pl => pl.Id == songFileId);
+        try
+        {
+            var songFile = await query.FirstOrDefaultAsync(pl => pl.Id == songFileId);
+
+            return Result.Success(songFile);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<SongFile?>(DataLayerErrors.Database.GetError());
+        }
     }
 
     public async Task<Result> AddRangeAsync(IEnumerable<SongFile> songFiles, bool saveChanges = false)
@@ -51,7 +62,7 @@ internal sealed class SongFileRepository : ISongFileRepository
             var toBeDeleted = _applicationContext.SongFiles
                 .Where(p => p.Id == songFile.Id).Take(1);
 
-            return await _applicationContext.ExecuteDeleteResult(toBeDeleted, "Playlist was not deleted");
+            return await _applicationContext.ExecuteDeleteResult(toBeDeleted);
         }
 
         _applicationContext.SongFiles.Remove(songFile);

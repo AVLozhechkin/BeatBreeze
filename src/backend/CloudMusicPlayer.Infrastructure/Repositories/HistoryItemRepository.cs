@@ -1,7 +1,7 @@
-﻿using CloudMusicPlayer.Core.Models;
+﻿using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
-using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
 
@@ -19,7 +19,7 @@ internal sealed class HistoryItemRepository : IHistoryItemRepository
 
         if (saveChanges)
         {
-            return await _applicationContext.SaveChangesResult("History Item was not added");
+            return await _applicationContext.SaveChangesResult();
         }
 
         return Result.Success();

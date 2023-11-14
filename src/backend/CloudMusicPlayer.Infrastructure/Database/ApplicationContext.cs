@@ -1,8 +1,8 @@
-﻿using System.Data.Common;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
+using CloudMusicPlayer.Core.Errors;
 using CloudMusicPlayer.Core.Models;
-using CSharpFunctionalExtensions;
+using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 
@@ -40,7 +40,7 @@ internal sealed class ApplicationContext : DbContext
             .HasIndex(pi => new { ProviderId = pi.SongFileId, pi.PlaylistId }).IsUnique();
     }
 
-    public async Task<Result> SaveChangesResult(string? customErrorMessage = null)
+    public async Task<Result> SaveChangesResult()
     {
         try
         {
@@ -51,14 +51,15 @@ internal sealed class ApplicationContext : DbContext
                 return Result.Success();
             }
 
-            return Result.Failure(customErrorMessage ?? "No changes were saved");
+            return Result.Failure(DataLayerErrors.Database.NoChangesMade());
         }
-        catch (DbException ex)
+        catch (Exception ex) when (ex is DbUpdateException or DbUpdateConcurrencyException or OperationCanceledException)
         {
-            return Result.Failure(customErrorMessage ?? ex.Message);
+            return Result.Failure(DataLayerErrors.Database.TransactionError());
         }
     }
-    public async Task<Result> ExecuteDeleteResult<T>(IQueryable<T> toBeDeleted, string? customErrorMessage = null)
+
+    public async Task<Result> ExecuteDeleteResult<T>(IQueryable<T> toBeDeleted)
     {
         try
         {
@@ -69,17 +70,17 @@ internal sealed class ApplicationContext : DbContext
                 return Result.Success();
             }
 
-            return Result.Failure(customErrorMessage ?? "Nothing was deleted");
+            return Result.Failure(DataLayerErrors.Database.NoChangesMade());
         }
-        catch (DbException ex)
+        // TODO Find out what exceptions are thrown by ExecuteDelete/ExecuteUpdate
+        catch (Exception ex)
         {
-            return Result.Failure(customErrorMessage ?? ex.Message);
+            return Result.Failure(DataLayerErrors.Database.DeleteError());
         }
     }
 
     public async Task<Result> ExecuteUpdateResult<T>(IQueryable<T> toBeUpdated,
-        Expression<Func<SetPropertyCalls<T>,SetPropertyCalls<T>>> setPropertyCalls,
-        string? customErrorMessage = null)
+        Expression<Func<SetPropertyCalls<T>,SetPropertyCalls<T>>> setPropertyCalls)
     {
         try
         {
@@ -90,11 +91,11 @@ internal sealed class ApplicationContext : DbContext
                 return Result.Success();
             }
 
-            return Result.Failure(customErrorMessage ?? "Nothing was updated");
+            return Result.Failure(DataLayerErrors.Database.NoChangesMade());
         }
-        catch (DbException ex)
+        catch (Exception ex)
         {
-            return Result.Failure(customErrorMessage ??ex.Message);
+            return Result.Failure(DataLayerErrors.Database.UpdateError());
         }
     }
 }

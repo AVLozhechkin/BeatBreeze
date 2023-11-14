@@ -1,6 +1,6 @@
-﻿using CloudMusicPlayer.Core.Models;
+﻿using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.UnitOfWorks;
-using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Core.Services;
 
@@ -13,73 +13,73 @@ public sealed class PlaylistService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<IEnumerable<Playlist>>> GetPlaylistsByUserId(Guid userId)
+    public async Task<Result<List<Playlist>>> GetPlaylistsByUserId(Guid userId)
     {
-        var playlists = await _unitOfWork.PlaylistRepository.GetAllByUserIdAsync(userId, true);
+        var playlistsResult = await _unitOfWork.PlaylistRepository.GetAllByUserIdAsync(userId, true);
 
-        return Result.Success<IEnumerable<Playlist>>(playlists);
+        return playlistsResult;
     }
 
     public async Task<Result<Playlist?>> GetPlaylistById(Guid playlistId, Guid userId)
     {
-        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true);
+        var playlistResult = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true);
 
-        if (playlist is null)
+        if (playlistResult.IsFailure)
         {
-            return Result.Success(playlist);
+            return playlistResult;
         }
 
-        if (playlist.UserId != userId)
+        if (playlistResult.Value is not null && playlistResult.Value.UserId != userId)
         {
-            return Result.Failure<Playlist?>("User is not the owner of the Playlist");
+            return Result.Failure<Playlist?>(DomainLayerErrors.NotTheOwner());
         }
 
-        return Result.Success<Playlist?>(playlist);
+        return playlistResult;
     }
 
     public async Task<Result<Playlist>> CreatePlaylist(Guid userId, string playlistName)
     {
         var playlistCreationResult = Playlist.Create(userId, playlistName);
 
-        var result = await _unitOfWork.PlaylistRepository.AddAsync(playlistCreationResult.Value, true);
+        var addResult = await _unitOfWork.PlaylistRepository.AddAsync(playlistCreationResult.Value, true);
 
-        if (result.IsFailure)
+        if (addResult.IsFailure)
         {
-            return Result.Failure<Playlist>(result.Error);
+            return Result.Failure<Playlist>(addResult.Error);
         }
 
-        return Result.Success(playlistCreationResult.Value);
+        return playlistCreationResult;
     }
-
-    /*public async Task<Result<Playlist>> CreatePlaylist(Guid userId, string name, IEnumerable<Guid> songFileIds)
-    {
-
-    }*/
 
     public async Task<Result> DeletePlaylist(Guid playlistId, Guid userId)
     {
-        var result = await _unitOfWork.PlaylistRepository.RemoveAsync(playlistId, userId, true);
+        var removeResult = await _unitOfWork.PlaylistRepository.RemoveAsync(playlistId, userId, true);
 
-        if (result.IsFailure)
+        if (removeResult.IsFailure)
         {
-            return Result.Failure<Playlist>(result.Error);
+            return Result.Failure(removeResult.Error);
         }
 
-        return Result.Success();
+        return removeResult;
     }
 
     public async Task<Result<Playlist>> AddToPlaylist(Guid playlistId, Guid songFileId, Guid userId)
     {
-        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, false);
+        var playlistResult = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, false);
 
-        if (playlist is null)
+        if (playlistResult.IsFailure)
         {
-            return Result.Failure<Playlist>("Playlist was not found");
+            return playlistResult;
         }
 
-        if (playlist.UserId != userId)
+        if (playlistResult.Value is null)
         {
-            return Result.Failure<Playlist>("User is not the owner of the Playlist");
+            return Result.Failure<Playlist>(DomainLayerErrors.NotFound());
+        }
+
+        if (playlistResult.Value.UserId != userId)
+        {
+            return Result.Failure<Playlist>(DomainLayerErrors.NotTheOwner());
         }
 
         var item = new PlaylistItem
@@ -95,31 +95,36 @@ public sealed class PlaylistService
             return Result.Failure<Playlist>(addResult.Error);
         }
 
-        playlist.PlaylistItems.Add(item);
+        playlistResult.Value.PlaylistItems.Add(item);
 
-        return Result.Success(playlist);
+        return playlistResult;
     }
 
     public async Task<Result<Playlist>> RemoveFromPlaylist(Guid playlistId, Guid songFileId, Guid userId)
     {
-        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true);
+        var playlistResult = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true);
 
-        if (playlist is null)
+        if (playlistResult.IsFailure)
         {
-            return Result.Failure<Playlist>("Playlist was not found");
+            return playlistResult;
         }
 
-        if (playlist.UserId != userId)
+        if (playlistResult.Value is null)
         {
-            return Result.Failure<Playlist>("User is not the owner of the Playlist");
+            return Result.Failure<Playlist>(DomainLayerErrors.NotFound());
+        }
+
+        if (playlistResult.Value.UserId != userId)
+        {
+            return Result.Failure<Playlist>(DomainLayerErrors.NotTheOwner());
         }
 
 
-        var item = playlist.PlaylistItems.FirstOrDefault(i => i.SongFileId == songFileId);
+        var item = playlistResult.Value.PlaylistItems.FirstOrDefault(i => i.SongFileId == songFileId);
 
         if (item is null)
         {
-            return Result.Failure<Playlist>("There is no such element in playlist");
+            return Result.Failure<Playlist>(DomainLayerErrors.Playlist.NoPlaylistItem());
         }
 
         var result = await _unitOfWork.PlaylistItemRepository.RemoveAsync(item.Id, true);
@@ -129,8 +134,8 @@ public sealed class PlaylistService
             return Result.Failure<Playlist>(result.Error);
         }
 
-        playlist.PlaylistItems.Remove(item);
+        playlistResult.Value.PlaylistItems.Remove(item);
 
-        return Result.Success(playlist);
+        return playlistResult;
     }
 }

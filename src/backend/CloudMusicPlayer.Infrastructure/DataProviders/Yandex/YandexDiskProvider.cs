@@ -1,8 +1,10 @@
 ﻿using System.Net.Http.Json;
+using CloudMusicPlayer.Core;
 using CloudMusicPlayer.Core.DataProviders;
+using CloudMusicPlayer.Core.Errors;
 using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Infrastructure.DataProviders.Yandex.Results;
-using CSharpFunctionalExtensions;
+using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.Extensions.Options;
 
 namespace CloudMusicPlayer.Infrastructure.DataProviders.Yandex;
@@ -33,38 +35,78 @@ internal sealed class YandexDiskProvider : IExternalProviderService
     public async Task<Result<IReadOnlyList<SongFile>>> GetSongFiles(DataProvider provider)
     {
         using var httpClient = _httpClientFactory.CreateClient();
-
         httpClient.DefaultRequestHeaders.Add("Authorization", $"OAuth {provider.AccessToken}");
-
         var uri = $"{FilesUrl}?media_type=audio&limit={Limit}&fields={Fields}";
 
-        var response = await httpClient.GetFromJsonAsync<FilesResult>(uri, CancellationToken.None);
+        HttpResponseMessage response;
 
-        var songFiles = new SongFile[response!.Items.Count];
-
-        for (int i = 0; i < songFiles.Length; i++)
+        try
         {
-            songFiles[i] = response.Items[i].MapToSongFile(provider);
+            response = await httpClient.GetAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<IReadOnlyList<SongFile>>(DataLayerErrors.Http.HttpError());
         }
 
-        return songFiles;
+        if (!response.IsSuccessStatusCode)
+        {
+            return Result.Failure<IReadOnlyList<SongFile>>(DataLayerErrors.Http.UnsuccessfulStatusCode(response.StatusCode));
+        }
+
+        var files = await response.Content.ReadFromJsonAsync<FilesResult>();
+
+        if (files is null)
+        {
+            return Result.Failure<IReadOnlyList<SongFile>>(DataLayerErrors.Http.UnknownResponse());
+        }
+
+        // TODO Check if there is a way to fetch more than LIMIT files
+        var songFiles = new List<SongFile>(files.Items.Count);
+
+        for (int i = 0; i < files.Items.Count(); i++)
+        {
+            songFiles[i] = files.Items[i].MapToSongFile(provider);
+        }
+
+        return Result.Success<IReadOnlyList<SongFile>>(songFiles);
     }
 
     public async Task<Result<string>> GetSongFileUrl(SongFile songFile, DataProvider provider)
     {
         var httpClient = _httpClientFactory.CreateClient();
-
         httpClient.DefaultRequestHeaders.Add("Authorization", $"OAuth {provider.AccessToken}");
+        var uri = $"{DownloadUrl}/?path={songFile.Path}";
 
-        var response = await httpClient.GetFromJsonAsync<TemporaryLinkResult>($"{DownloadUrl}/?path={songFile.Path}");
+        HttpResponseMessage response;
 
-        return response?.Link;
+        try
+        {
+            response = await httpClient.GetAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<string>(DataLayerErrors.Http.HttpError());
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Result.Failure<string>(DataLayerErrors.Http.UnsuccessfulStatusCode(response.StatusCode));
+        }
+
+        var link = await response.Content.ReadFromJsonAsync<TemporaryLinkResult>();
+
+        if (link is null)
+        {
+            return Result.Failure<string>(DataLayerErrors.Http.UnknownResponse());
+        }
+
+        return Result.Success(link.Link);
     }
 
     public async Task<Result<AccessToken>> GetApiToken(string refreshToken)
     {
         var httpClient = _httpClientFactory.CreateClient();
-
         var args = new Dictionary<string, string>()
         {
             { "grant_type", "refresh_token" },
@@ -73,9 +115,29 @@ internal sealed class YandexDiskProvider : IExternalProviderService
             { "client_secret", _options.ClientSecret }
         };
 
-        var response = await httpClient.PostAsync(RefreshAccessTokenUrl, new FormUrlEncodedContent(args));
+        HttpResponseMessage response;
+
+        try
+        {
+            response = await httpClient.PostAsync(RefreshAccessTokenUrl, new FormUrlEncodedContent(args));
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<AccessToken>(DataLayerErrors.Http.HttpError());
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Result.Failure<AccessToken>(DataLayerErrors.Http.UnsuccessfulStatusCode(response.StatusCode));
+        }
+
         var accessToken = await response.Content.ReadFromJsonAsync<AccessToken>();
 
-        return accessToken;
+        if (accessToken is null)
+        {
+            return Result.Failure<AccessToken>(DataLayerErrors.Http.UnknownResponse());
+        }
+
+        return Result<AccessToken>.Success(accessToken);
     }
 }

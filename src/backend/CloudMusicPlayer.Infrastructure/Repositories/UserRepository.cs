@@ -1,7 +1,9 @@
-﻿using CloudMusicPlayer.Core.Models;
+﻿using CloudMusicPlayer.Core;
+using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
-using CSharpFunctionalExtensions;
+using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
@@ -25,7 +27,7 @@ internal sealed class UserRepository : IUserRepository
     }
 
 
-    public async Task<User?> GetByNameAsync(string name, bool asNoTracking = true)
+    public async Task<Result<User?>> GetByNameAsync(string name, bool asNoTracking = true)
     {
         var query = _applicationContext.Users.AsQueryable();
 
@@ -34,10 +36,19 @@ internal sealed class UserRepository : IUserRepository
             query = query.AsNoTracking();
         }
 
-        return await query.FirstOrDefaultAsync(u => u.Name == name);
+        try
+        {
+            var user = await query.FirstOrDefaultAsync(u => u.Name == name);
+
+            return Result.Success(user);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<User?>(DataLayerErrors.Database.GetError());
+        }
     }
 
-    public async Task<User?> GetByEmailAsync(string email, bool asNoTracking = true)
+    public async Task<Result<User?>> GetByEmailAsync(string email, bool asNoTracking = true)
     {
         var query = _applicationContext.Users.AsQueryable();
 
@@ -46,10 +57,19 @@ internal sealed class UserRepository : IUserRepository
             query = query.AsNoTracking();
         }
 
-        return await query.FirstOrDefaultAsync(u => u.Email == email);
+        try
+        {
+            var user = await query.FirstOrDefaultAsync(u => u.Email == email);
+
+            return Result.Success(user);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<User?>(DataLayerErrors.Database.GetError());
+        }
     }
 
-    public async Task<User?> GetByIdAsync(Guid userId, bool asNoTracking = true)
+    public async Task<Result<User?>> GetByIdAsync(Guid userId, bool asNoTracking = true)
     {
         var query = _applicationContext.Users.AsQueryable();
 
@@ -58,19 +78,26 @@ internal sealed class UserRepository : IUserRepository
             query = query.AsNoTracking();
         }
 
-        return await query.FirstOrDefaultAsync(u => u.Id == userId);
+        try
+        {
+            var user = await query.FirstOrDefaultAsync(u => u.Id == userId);
+
+            return Result.Success(user);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<User?>(DataLayerErrors.Database.GetError());
+        }
     }
 
     public async Task<Result> AddAsync(User user, bool saveChanges = false)
     {
+        await _applicationContext.Users.AddAsync(user);
+
         if (saveChanges)
         {
-            await _applicationContext.Users.AddAsync(user);
-
-            return await _applicationContext.SaveChangesResult("User was not added");
+            return await _applicationContext.SaveChangesResult();
         }
-
-        await _applicationContext.Users.AddAsync(user);
 
         return Result.Success();
     }
@@ -87,8 +114,7 @@ internal sealed class UserRepository : IUserRepository
                         .SetProperty(u => u.PasswordHash, user.PasswordHash)
                         .SetProperty(u => u.CreatedAt, user.CreatedAt)
                         .SetProperty(u => u.UpdatedAt, user.UpdatedAt)
-                        .SetProperty(u => u.PasswordUpdatedAt, user.PasswordUpdatedAt),
-                "User was not updated");
+                        .SetProperty(u => u.PasswordUpdatedAt, user.PasswordUpdatedAt));
         }
 
         _applicationContext.Users.Update(user);
@@ -103,7 +129,7 @@ internal sealed class UserRepository : IUserRepository
             var toBeDeleted = _applicationContext.Users
                 .Where(u => u.Id == userId).Take(1);
 
-            return await _applicationContext.ExecuteDeleteResult(toBeDeleted, "User was not deleted");
+            return await _applicationContext.ExecuteDeleteResult(toBeDeleted);
         }
 
         var user = new User { Id = userId };

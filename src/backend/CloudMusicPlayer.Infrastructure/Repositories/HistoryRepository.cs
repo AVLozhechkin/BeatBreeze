@@ -1,7 +1,8 @@
-﻿using CloudMusicPlayer.Core.Models;
+﻿using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
-using CSharpFunctionalExtensions;
+using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
@@ -21,13 +22,13 @@ internal sealed class HistoryRepository : IHistoryRepository
 
         if (saveChanges)
         {
-            return await _applicationContext.SaveChangesResult("History was not added");
+            return await _applicationContext.SaveChangesResult();
         }
 
         return Result.Success();
     }
 
-    public async Task<History?> GetByUserIdAsync(Guid userId, bool includeHistoryItems = false, bool asNoTracking = true)
+    public async Task<Result<History?>> GetByUserIdAsync(Guid userId, bool includeHistoryItems = false, bool asNoTracking = true)
     {
         var query = _applicationContext.Histories.AsQueryable();
 
@@ -41,8 +42,15 @@ internal sealed class HistoryRepository : IHistoryRepository
             query = query.AsNoTracking();
         }
 
-        var provider = await query.FirstOrDefaultAsync(h => h.UserId == userId);
+        try
+        {
+            var provider = await query.FirstOrDefaultAsync(h => h.UserId == userId);
 
-        return provider;
+            return Result.Success(provider);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<History?>(DataLayerErrors.Database.GetError());
+        }
     }
 }

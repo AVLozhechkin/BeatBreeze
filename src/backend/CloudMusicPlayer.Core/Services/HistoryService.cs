@@ -1,6 +1,6 @@
-﻿using CloudMusicPlayer.Core.Models;
+﻿using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.UnitOfWorks;
-using CSharpFunctionalExtensions;
 
 namespace CloudMusicPlayer.Core.Services;
 
@@ -15,30 +15,35 @@ public sealed class HistoryService
 
     public async Task<Result<History?>> GetUserHistory(Guid userId)
     {
-        var history = await _unitOfWork.HistoryRepository.GetByUserIdAsync(userId, true);
+        var historyResult = await _unitOfWork.HistoryRepository.GetByUserIdAsync(userId, true);
 
-        return Result.Success(history);
+        return historyResult;
     }
 
     public async Task<Result<History>> AddToHistory(Guid userId, Guid songFileId)
     {
-        var history = await _unitOfWork.HistoryRepository.GetByUserIdAsync(userId, true);
+        var historyResult = await _unitOfWork.HistoryRepository.GetByUserIdAsync(userId, true);
 
-        if (history is null)
+        if (historyResult.IsFailure)
         {
-            return Result.Failure<History>(DomainErrors.NotFound);
+            return historyResult;
         }
 
-        if (history.UserId != userId)
+        if (historyResult.Value is null)
         {
-            return Result.Failure<History>(DomainErrors.NotTheOwner);
+            return Result.Failure<History>(DomainLayerErrors.NotFound());
         }
 
-        var itemCreationResult = HistoryItem.Create(history.Id, songFileId);
+        if (historyResult.Value.UserId != userId)
+        {
+            return Result.Failure<History>(DomainLayerErrors.NotTheOwner());
+        }
+
+        var itemCreationResult = HistoryItem.Create(historyResult.Value.Id, songFileId);
 
         if (itemCreationResult.IsFailure)
         {
-            return Result.Failure<History>(DomainErrors.CantBeCreated);
+            return Result.Failure<History>(itemCreationResult.Error);
         }
 
         var addResult = await _unitOfWork.HistoryItemRepository.AddAsync(itemCreationResult.Value, true);
@@ -48,8 +53,8 @@ public sealed class HistoryService
             return Result.Failure<History>(addResult.Error);
         }
 
-        history.HistoryItems.Add(itemCreationResult.Value);
+        historyResult.Value.HistoryItems.Add(itemCreationResult.Value);
 
-        return Result.Success(history);
+        return Result.Success(historyResult.Value);
     }
 }

@@ -17,8 +17,8 @@ internal record Metadata
     public required string Id { get; set; }
 
     [JsonPropertyName("size")]
-    public required ulong Size { get; set; }
+    public ulong Size { get; set; }
 
     [JsonPropertyName("content_hash")]
-    public required string ContentHash { get; set; }
+    public string ContentHash { get; set; }
 }

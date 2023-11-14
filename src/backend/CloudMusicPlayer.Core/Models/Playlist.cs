@@ -1,16 +1,13 @@
-﻿using CSharpFunctionalExtensions;
+﻿using CloudMusicPlayer.Core.Errors;
 
 namespace CloudMusicPlayer.Core.Models;
 
 public class Playlist
 {
     public Guid Id { get; init; }
-
     public string Name { get; init; } = null!;
-
     public User? User { get; init; }
     public Guid UserId { get; init; }
-
     public int Size { get; init; }
     public DateTimeOffset CreatedAt { get; init; }
     public DateTimeOffset UpdatedAt { get; init; }
@@ -20,7 +17,7 @@ public class Playlist
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Result.Failure<Playlist>("Playlist name must not be a null or whitespace");
+            return Result.Failure<Playlist>(DomainLayerErrors.Playlist.PlaylistNameIsNullOrWhitespace());
         }
 
         var playlist = new Playlist
