@@ -1,61 +1,42 @@
 ﻿using CloudMusicPlayer.API.Dtos.Requests;
 using CloudMusicPlayer.API.Utils;
+using CloudMusicPlayer.Core.Exceptions;
+using CloudMusicPlayer.Core.Interfaces;
 using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloudMusicPlayer.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class HistoriesController : ControllerBase
+public sealed class HistoriesController : BaseController
 {
-    private readonly HistoryService _historyService;
+    private readonly ILogger<HistoriesController> _logger;
+    private readonly IHistoryService _historyService;
 
-    public HistoriesController(HistoryService historyService)
+    public HistoriesController(ILogger<HistoriesController> logger, IHistoryService historyService)
     {
+        _logger = logger;
         _historyService = historyService;
     }
 
     [HttpGet]
-    public async Task<ActionResult<History>> GetUserHistory()
+    public async Task<ActionResult<History?>> GetUserHistory()
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userId = this.User.GetUserGuid();
 
-        if (userIdResult.IsFailure)
-        {
-            return Unauthorized("Something wrong with cookies. Please re-login.");
-        }
+        var history = await _historyService.GetUserHistory(userId);
 
-        var historyResult = await _historyService.GetUserHistory(userIdResult.Value);
-
-        if (historyResult.IsFailure)
-        {
-            return BadRequest(historyResult.Error);
-        }
-
-        return Ok(historyResult.Value);
+        return Ok(history);
     }
 
     [HttpPost("add")]
     public async Task<ActionResult<History>> AddToHistory(AddToHistoryRequest addToHistoryRequest)
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userId = this.User.GetUserGuid();
 
-        if (userIdResult.IsFailure)
-        {
-            return Unauthorized("Something wrong with cookies. Please re-login.");
-        }
+        var history = await _historyService.AddToHistory(userId, addToHistoryRequest.SongFileId);
 
-        var historyResult = await _historyService.AddToHistory(userIdResult.Value, addToHistoryRequest.SongFileId);
-
-        if (historyResult.IsFailure)
-        {
-            return BadRequest(historyResult.Error);
-        }
-
-        return Ok(historyResult.Value);
+        return Ok(history);
     }
 }

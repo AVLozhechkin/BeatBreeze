@@ -1,9 +1,7 @@
-﻿using CloudMusicPlayer.Core;
-using CloudMusicPlayer.Core.Errors;
+﻿using CloudMusicPlayer.Core.Exceptions;
+using CloudMusicPlayer.Core.Interfaces.Repositories;
 using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
-using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
@@ -17,7 +15,7 @@ internal sealed class PlaylistRepository : IPlaylistRepository
         _applicationContext = applicationContext;
     }
 
-    public async Task<Result<Playlist?>> GetByIdAsync(Guid playlistId, bool includeSongFiles, bool asNoTracking = true)
+    public async Task<Playlist?> GetByIdAsync(Guid playlistId, bool includeSongFiles, bool asNoTracking = true)
     {
         var query = _applicationContext.Playlists.AsQueryable();
 
@@ -32,25 +30,17 @@ internal sealed class PlaylistRepository : IPlaylistRepository
             query = query.AsNoTracking();
         }
 
-        try
-        {
-            var playlist = await query.FirstOrDefaultAsync(pl => pl.Id == playlistId);
-
-            return Result.Success<Playlist?>(playlist);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<Playlist?>(DataLayerErrors.Database.GetError());
-        }
+        return await query.FirstOrDefaultAsync(pl => pl.Id == playlistId);
     }
 
-    public async Task<Result<List<Playlist>>> GetAllByUserIdAsync(Guid userId, bool includeSongFiles, bool asNoTracking = true)
+    public async Task<List<Playlist>> GetAllByUserIdAsync(Guid userId, bool includeSongFiles, bool asNoTracking = true)
     {
         var query = _applicationContext.Playlists.AsQueryable();
 
         if (includeSongFiles)
         {
-            query = query.Include(pl => pl.PlaylistItems)
+            query = query
+                .Include(pl => pl.PlaylistItems)
                 .ThenInclude(pi => pi.SongFile);
         }
 
@@ -59,65 +49,61 @@ internal sealed class PlaylistRepository : IPlaylistRepository
             query = query.AsNoTracking();
         }
 
-        try
-        {
-            var playlists = await query.Where(pl => pl.UserId == userId).ToListAsync();
-
-            return Result.Success(playlists);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<List<Playlist>>(DataLayerErrors.Database.GetError());
-        }
+        return await query.Where(pl => pl.UserId == userId).ToListAsync();
     }
 
-    public async Task<Result> AddAsync(Playlist playlist, bool saveChanges = false)
+    public async Task AddAsync(Playlist playlist, bool saveChanges = false)
     {
         await _applicationContext.Playlists.AddAsync(playlist);
 
         if (saveChanges)
         {
-            return await _applicationContext.SaveChangesResult();
+            await _applicationContext.SaveChangesAsync();
         }
-
-        return Result.Success();
     }
 
-    public async Task<Result> UpdateAsync(Playlist playlist, bool saveChanges = false)
+    public async Task UpdateAsync(Playlist playlist, bool saveChanges = false)
     {
         if (saveChanges)
         {
-            var toBeUpdated = _applicationContext.Playlists.Where(p => p.Id == playlist.Id);
-
-            return await _applicationContext.ExecuteUpdateResult(toBeUpdated, s =>
-                    s.SetProperty(p => p.Name, playlist.Name)
+            var result = await _applicationContext
+                .Playlists
+                .Where(p => p.Id == playlist.Id)
+                .ExecuteUpdateAsync(setters =>
+                    setters
+                        .SetProperty(p => p.Name, playlist.Name)
                         .SetProperty(p => p.UpdatedAt, playlist.UpdatedAt));
+
+            if (result == 0)
+            {
+                throw NotFoundException.Create<Playlist>(playlist.Id);
+            }
+
+            return;
         }
 
         _applicationContext.Playlists.Update(playlist);
-
-        return Result.Success();
     }
 
-    public async Task<Result> RemoveAsync(Guid playlistId, Guid ownerId, bool saveChanges = false)
+    public async Task RemoveAsync(Guid playlistId, Guid ownerId, bool saveChanges = false)
     {
         if (saveChanges)
         {
-            var toBeDeleted = _applicationContext.Playlists
-                .Where(p => p.Id == playlistId && p.UserId == ownerId).Take(1);
+            var result = await _applicationContext
+                .Playlists
+                .Where(p => p.Id == playlistId && p.UserId == ownerId)
+                .Take(1)
+                .ExecuteDeleteAsync();
 
-            return await _applicationContext.ExecuteDeleteResult(toBeDeleted);
+            if (result == 0)
+            {
+                throw NotFoundException.Create<Playlist>(playlistId);
+            }
+
+            return;
         }
 
-        var playlist = await _applicationContext.Playlists.FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == ownerId);
-
-        if (playlist is null)
-        {
-            return Result.Failure(DataLayerErrors.Database.NotFound());
-        }
-
+        var playlist = new Playlist() { Id = playlistId, UserId = ownerId };
         _applicationContext.Playlists.Remove(playlist);
-
-        return Result.Success();
     }
 }

@@ -1,83 +1,52 @@
-using System.IO.Compression;
 using System.Text.Json.Serialization;
-using CloudMusicPlayer.API.Services;
-using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.Services;
+using CloudMusicPlayer.API.Utils;
+using CloudMusicPlayer.Core;
 using CloudMusicPlayer.Infrastructure;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.OpenApi.Models;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database dependencies
-builder.Services.AddDbContexts("Data source = CloudMusicPlayer.db");
-
-builder.Services.AddHttpClient();
-
-builder.Services.AddRepositories();
-
-builder.Services.AddUnitOfWork();
-
-builder.Services.AddExternalDataProviders(builder.Configuration);
-
-builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
-
-
-builder.Services.AddScoped<ProviderService>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<PlaylistService>();
-builder.Services.AddScoped<HistoryService>();
-
-builder.Services.AddResponseCompression(options =>
-{
-    options.EnableForHttps = true;
-    options.Providers.Add<GzipCompressionProvider>();
-});
-
-builder.Services.Configure<GzipCompressionProviderOptions>(options =>
-{
-    options.Level = CompressionLevel.Optimal;
-});
-
-
-// Authentication setup
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-    {
-        options.Cookie.Name = "CloudMusicPlayer_User";
-        options.Cookie.HttpOnly = false;
-    })
-    .AddCookie("External", options =>
-    {
-        options.Cookie.Name = "External";
-        options.Cookie.HttpOnly = false;
-    })
-    .AddYandex(options =>
-    {
-        options.SignInScheme = "External";
-        options.ClientId = builder.Configuration["yandex:clientId"]!;
-        options.ClientSecret = builder.Configuration["yandex:clientSecret"]!;
-        options.SaveTokens = true;
-    }).AddDropbox(options =>
-    {
-        options.SignInScheme = "External";
-        options.ClientId = builder.Configuration["dropbox:clientId"]!;
-        options.ClientSecret = builder.Configuration["dropbox:clientSecret"]!;
-        options.SaveTokens = true;
-        options.AccessType = "offline";
-    });
-
-builder.Services.AddAuthorization();
+builder.Services
+    .AddApiLayer(builder.Configuration)
+    .AddCoreLayer()
+    .AddInfrastructureLayer("Data source = CloudMusicPlayer.db");
 
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
     {
+        var enumConverter = new JsonStringEnumConverter();
+
         o.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        o.JsonSerializerOptions.Converters.Add(enumConverter);
     });
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "CloudMusicPlayer API",
+        Version = "v1",
+        Description = "An API for CloudMusicPlayer",
+    });
+});
+
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration.ReadFrom.Configuration(context.Configuration);
+});
 
 var app = builder.Build();
+
+app.UseSerilogRequestLogging();
+
+app.UseExceptionHandler(_ => {});
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseResponseCompression();
 

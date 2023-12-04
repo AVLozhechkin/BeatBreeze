@@ -1,8 +1,15 @@
 ﻿namespace CloudMusicPlayer.Core.Models;
 
-public record PlaylistItem
+public record PlaylistItem : BaseEntity
 {
-    public Guid Id { get; set; }
+    public PlaylistItem() {}
+
+    public PlaylistItem(Guid playlistId, Guid songFileId)
+    {
+        PlaylistId = playlistId;
+        SongFileId = songFileId;
+    }
+
 
     public Playlist Playlist { get; set; } = null!;
     public Guid PlaylistId { get; set; }

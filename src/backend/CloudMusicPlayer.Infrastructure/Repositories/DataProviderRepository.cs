@@ -1,8 +1,8 @@
-﻿using CloudMusicPlayer.Core.Errors;
+﻿using CloudMusicPlayer.Core.Enums;
+using CloudMusicPlayer.Core.Exceptions;
+using CloudMusicPlayer.Core.Interfaces.Repositories;
 using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
-using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
@@ -16,7 +16,7 @@ internal sealed class DataProviderRepository : IDataProviderRepository
         _applicationContext = applicationContext;
     }
 
-    public async Task<Result<DataProvider?>> GetAsync(Guid dataProviderId, bool includeSongFiles = false, bool asNoTracking = true)
+    public async Task<DataProvider?> GetByIdAsync(Guid dataProviderId, bool includeSongFiles = false, bool asNoTracking = true)
     {
         var query = _applicationContext.DataProviders.AsQueryable();
 
@@ -30,19 +30,24 @@ internal sealed class DataProviderRepository : IDataProviderRepository
             query = query.AsNoTracking();
         }
 
-        try
-        {
-            var provider = await query.FirstOrDefaultAsync(dp => dp.Id == dataProviderId);
-
-            return Result.Success(provider);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<DataProvider?>(DataLayerErrors.Database.GetError());
-        }
+        return await query.FirstOrDefaultAsync(dp => dp.Id == dataProviderId);
     }
 
-    public async Task<Result<List<DataProvider>>> GetAllByUserIdAsync(Guid userId, bool includeSongFiles = false, bool asNoTracking = true)
+    public async Task<DataProvider?> GetByTypeAndName(ProviderTypes providerType, string name, Guid userId, bool asNoTracking)
+    {
+        var query = _applicationContext.DataProviders.AsQueryable();
+
+        if (asNoTracking)
+        {
+            query = query.AsNoTracking();
+        }
+
+        return await query.FirstOrDefaultAsync(dp => dp.ProviderType == providerType
+                                                     && dp.Name == name
+                                                     && dp.UserId == userId);
+    }
+
+    public async Task<List<DataProvider>> GetAllByUserIdAsync(Guid userId, bool includeSongFiles = false, bool asNoTracking = true)
     {
         var query = _applicationContext.DataProviders.AsQueryable();
 
@@ -56,74 +61,62 @@ internal sealed class DataProviderRepository : IDataProviderRepository
             query = query.AsNoTracking();
         }
 
-        try
-        {
-            var providers = await query.Where(dp => dp.UserId == userId)
-                .ToListAsync();
-
-            return Result.Success(providers);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<List<DataProvider>>(DataLayerErrors.Database.GetError());
-        }
+        return await query.Where(dp => dp.UserId == userId).ToListAsync();
     }
 
-    public async Task<Result> AddAsync(DataProvider dataProvider, bool saveChanges = false)
+    public async Task AddAsync(DataProvider dataProvider, bool saveChanges = false)
     {
         await _applicationContext.DataProviders.AddAsync(dataProvider);
 
         if (saveChanges)
         {
-            return await _applicationContext.SaveChangesResult();
+            await _applicationContext.SaveChangesAsync();
         }
-
-        return Result.Success();
     }
 
-    public async Task<Result> UpdateAsync(DataProvider dataProvider, bool saveChanges = false)
+    public async Task UpdateAsync(DataProvider dataProvider, bool saveChanges = false)
     {
         if (saveChanges)
         {
-            var toBeUpdated = _applicationContext.DataProviders.Where(dp => dp.Id == dataProvider.Id);
+            var result = await _applicationContext
+                .DataProviders
+                .Where(dp => dp.Id == dataProvider.Id)
+                .Take(1)
+                .ExecuteUpdateAsync(setters =>
+                    setters
+                    .SetProperty(dp => dp.AccessToken, dataProvider.AccessToken)
+                    .SetProperty(dp => dp.AccessTokenExpiration, dataProvider.AccessTokenExpiration)
+                    .SetProperty(dp => dp.RefreshToken, dataProvider.RefreshToken));
 
-            return await _applicationContext.ExecuteUpdateResult(toBeUpdated, s =>
-                    s.SetProperty(dp => dp.AccessToken, dataProvider.AccessToken)
-                        .SetProperty(dp => dp.AccessTokenExpiresAt, dataProvider.AccessTokenExpiresAt)
-                        .SetProperty(dp => dp.RefreshToken, dataProvider.RefreshToken));
+            if (result == 0)
+            {
+                throw NotFoundException.Create<DataProvider>(dataProvider.Id);
+            }
+
+            return;
         }
 
         _applicationContext.DataProviders.Update(dataProvider);
-
-        return Result.Success();
     }
 
-    public async Task<Result> RemoveAsync(Guid dataProviderId, Guid ownerId, bool saveChanges = false)
+    public async Task RemoveAsync(Guid dataProviderId, Guid ownerId, bool saveChanges)
     {
         if (saveChanges)
         {
-            var toBeDeleted = _applicationContext.DataProviders
-                .Where(dp => dp.Id == dataProviderId && dp.UserId == ownerId).Take(1);
+            var result = await _applicationContext
+                .DataProviders
+                .Where(dp => dp.Id == dataProviderId && dp.UserId == ownerId)
+                .ExecuteDeleteAsync();
 
-            return await _applicationContext.ExecuteDeleteResult(toBeDeleted);
-        }
-
-        try
-        {
-            var provider =
-                await _applicationContext.DataProviders.FirstOrDefaultAsync(dp =>
-                    dp.Id == dataProviderId && dp.UserId == ownerId);
-
-            if (provider is null)
+            if (result == 0)
             {
-                return Result.Failure(DataLayerErrors.Database.NotFound());
+                throw NotFoundException.Create<DataProvider>(dataProviderId);
             }
 
-            return Result.Success();
+            return;
         }
-        catch (Exception ex)
-        {
-            return Result.Failure(DataLayerErrors.Database.DeleteError());
-        }
+
+        var provider = new DataProvider() { Id = dataProviderId, UserId = ownerId };
+        _applicationContext.DataProviders.Remove(provider);
     }
 }

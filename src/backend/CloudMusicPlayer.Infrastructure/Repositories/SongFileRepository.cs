@@ -1,9 +1,7 @@
-﻿using CloudMusicPlayer.Core;
-using CloudMusicPlayer.Core.Errors;
+﻿using CloudMusicPlayer.Core.Exceptions;
+using CloudMusicPlayer.Core.Interfaces.Repositories;
 using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
-using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
@@ -17,7 +15,7 @@ internal sealed class SongFileRepository : ISongFileRepository
         _applicationContext = applicationContext;
     }
 
-    public async Task<Result<SongFile?>> GetById(Guid songFileId, bool includeDataProvider, bool asNoTracking = true)
+    public async Task<SongFile?> GetById(Guid songFileId, bool includeDataProvider, bool asNoTracking = true)
     {
         var query = _applicationContext.SongFiles.AsQueryable();
 
@@ -31,42 +29,37 @@ internal sealed class SongFileRepository : ISongFileRepository
             query = query.AsNoTracking();
         }
 
-        try
-        {
-            var songFile = await query.FirstOrDefaultAsync(pl => pl.Id == songFileId);
-
-            return Result.Success(songFile);
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<SongFile?>(DataLayerErrors.Database.GetError());
-        }
+        return await query.FirstOrDefaultAsync(pl => pl.Id == songFileId);
     }
 
-    public async Task<Result> AddRangeAsync(IEnumerable<SongFile> songFiles, bool saveChanges = false)
+    public async Task AddRangeAsync(IEnumerable<SongFile> songFiles, bool saveChanges = false)
     {
         await _applicationContext.SongFiles.AddRangeAsync(songFiles);
 
         if (saveChanges)
         {
-            return await _applicationContext.SaveChangesResult();
+            await _applicationContext.SaveChangesAsync();
         }
-
-        return Result.Success();
     }
 
-    public async Task<Result> RemoveAsync(SongFile songFile, bool saveChanges = false)
+    public async Task RemoveAsync(SongFile songFile, bool saveChanges = false)
     {
         if (saveChanges)
         {
-            var toBeDeleted = _applicationContext.SongFiles
-                .Where(p => p.Id == songFile.Id).Take(1);
+            var result = await _applicationContext
+                .SongFiles
+                .Where(p => p.Id == songFile.Id)
+                .Take(1)
+                .ExecuteDeleteAsync();
 
-            return await _applicationContext.ExecuteDeleteResult(toBeDeleted);
+            if (result == 0)
+            {
+                throw NotFoundException.Create<SongFile>(songFile.Id);
+            }
+
+            return;
         }
 
         _applicationContext.SongFiles.Remove(songFile);
-
-        return Result.Success();
     }
 }

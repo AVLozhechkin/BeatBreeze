@@ -1,6 +1,5 @@
-﻿using CloudMusicPlayer.Core.Errors;
+﻿using CloudMusicPlayer.Core.Interfaces.Repositories;
 using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
@@ -13,15 +12,8 @@ internal sealed class HistoryItemRepository : IHistoryItemRepository
     {
         _applicationContext = applicationContext;
     }
-    public async Task<Result> AddAsync(HistoryItem historyItem, bool saveChanges = false)
+    public async Task AddAsync(HistoryItem historyItem, bool saveChanges = false)
     {
         await _applicationContext.HistoryItems.AddAsync(historyItem);
-
-        if (saveChanges)
-        {
-            return await _applicationContext.SaveChangesResult();
-        }
-
-        return Result.Success();
     }
 }

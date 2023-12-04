@@ -1,60 +1,51 @@
-﻿using CloudMusicPlayer.Core.Errors;
+﻿using CloudMusicPlayer.Core.Exceptions;
+using CloudMusicPlayer.Core.Interfaces;
 using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.UnitOfWorks;
+using Microsoft.Extensions.Logging;
 
 namespace CloudMusicPlayer.Core.Services;
 
-public sealed class HistoryService
+internal sealed class HistoryService : IHistoryService
 {
+    private readonly ILogger<HistoryService> _logger;
     private readonly IUnitOfWork _unitOfWork;
 
-    public HistoryService(IUnitOfWork unitOfWork)
+    public HistoryService(ILogger<HistoryService> logger, IUnitOfWork unitOfWork)
     {
+        _logger = logger;
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<History?>> GetUserHistory(Guid userId)
+    public async Task<History> GetUserHistory(Guid userId)
     {
-        var historyResult = await _unitOfWork.HistoryRepository.GetByUserIdAsync(userId, true);
+        var history = await _unitOfWork.HistoryRepository.GetByUserIdAsync(userId, true, true);
 
-        return historyResult;
+        if (history is null)
+        {
+            _logger.LogWarning("There is no history for the user ({userId})", userId);
+            throw NotFoundException.Create<History>();
+        }
+
+        return history;
     }
 
-    public async Task<Result<History>> AddToHistory(Guid userId, Guid songFileId)
+    public async Task<History> AddToHistory(Guid userId, Guid songFileId)
     {
-        var historyResult = await _unitOfWork.HistoryRepository.GetByUserIdAsync(userId, true);
+        var history = await _unitOfWork.HistoryRepository.GetByUserIdAsync(userId, true, true);
 
-        if (historyResult.IsFailure)
+        if (history is null)
         {
-            return historyResult;
+            _logger.LogWarning("There is no history for the user ({userId}), " +
+                               "songFile ({songFileId}) was not added", userId, songFileId);
+            throw NotFoundException.Create<History>();
         }
 
-        if (historyResult.Value is null)
-        {
-            return Result.Failure<History>(DomainLayerErrors.NotFound());
-        }
+        var historyItem = new HistoryItem(history.Id, songFileId);
 
-        if (historyResult.Value.UserId != userId)
-        {
-            return Result.Failure<History>(DomainLayerErrors.NotTheOwner());
-        }
+        await _unitOfWork.HistoryItemRepository.AddAsync(historyItem, true);
 
-        var itemCreationResult = HistoryItem.Create(historyResult.Value.Id, songFileId);
+        history.HistoryItems.Add(historyItem);
 
-        if (itemCreationResult.IsFailure)
-        {
-            return Result.Failure<History>(itemCreationResult.Error);
-        }
-
-        var addResult = await _unitOfWork.HistoryItemRepository.AddAsync(itemCreationResult.Value, true);
-
-        if (addResult.IsFailure)
-        {
-            return Result.Failure<History>(addResult.Error);
-        }
-
-        historyResult.Value.HistoryItems.Add(itemCreationResult.Value);
-
-        return Result.Success(historyResult.Value);
+        return history;
     }
 }

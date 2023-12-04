@@ -1,23 +1,21 @@
 ﻿using System.Security.Claims;
 using CloudMusicPlayer.API.Dtos.Models;
-using CloudMusicPlayer.API.Services;
 using CloudMusicPlayer.API.Utils;
+using CloudMusicPlayer.Core.Enums;
+using CloudMusicPlayer.Core.Interfaces;
 using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloudMusicPlayer.API.Controllers;
 
-[ApiController]
 [Authorize]
-[Route("api/[controller]")]
-public sealed class ProvidersController : ControllerBase
+public sealed class ProvidersController : BaseController
 {
-    private readonly ProviderService _providerService;
+    private readonly IProviderService _providerService;
 
-    public ProvidersController(ProviderService providerService, AuthService authService)
+    public ProvidersController(IProviderService providerService)
     {
         _providerService = providerService;
     }
@@ -25,82 +23,44 @@ public sealed class ProvidersController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<DataProviderDto>>> GetListOfDataProviders()
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userId = this.User.GetUserGuid();
 
-        if (userIdResult.IsFailure)
-        {
-            return BadRequest("Something wrong with cookies. Please re-login.");
-        }
+        var providers = await _providerService.GetAllProvidersByUserId(userId);
 
-        var providersResult = await _providerService.GetAllProvidersByUserId(userIdResult.Value);
-
-        if(providersResult.IsFailure)
-        {
-            // switch return
-            return BadRequest(providersResult.Error);
-        }
-
-        return Ok(providersResult.Value.Select(DataProviderDto.Create));
+        return Ok(providers.Select(DataProviderDto.Create));
     }
 
     [HttpGet("{providerId:required}")]
     public async Task<ActionResult<DataProviderDto>> GetDataProviderWithContent(Guid providerId)
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userId = this.User.GetUserGuid();
 
-        if (userIdResult.IsFailure)
+        var provider = await _providerService.GetDataProvider( providerId, userId);
+
+        if (provider is null)
         {
-            return BadRequest("Something wrong with cookies. Please re-login.");
+            return NotFound($"Data provider with ID: {providerId} was not found");
         }
 
-        var providerResult = await _providerService.GetDataProvider( providerId, userIdResult.Value);
-
-        if (providerResult.IsFailure)
-        {
-            // switch return
-            return BadRequest(providerResult.Error);
-        }
-
-        return Ok(DataProviderDto.Create(providerResult.Value!));
+        return Ok(DataProviderDto.Create(provider));
     }
 
     [HttpPost("{providerId:required}")]
     public async Task<ActionResult<DataProvider>> UpdateDataProviderContent(Guid providerId)
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userId = this.User.GetUserGuid();
 
-        if (userIdResult.IsFailure)
-        {
-            return BadRequest("Something wrong with cookies. Please re-login.");
-        }
+        var updatedProvider = await _providerService.UpdateDataProvider(providerId, userId);
 
-        var updatedProviderResult = await _providerService.UpdateDataProvider(providerId, userIdResult.Value);
-
-        if (updatedProviderResult.IsFailure)
-        {
-            // switch return
-            return BadRequest(updatedProviderResult.Error);
-        }
-
-        return Ok(DataProviderDto.Create(updatedProviderResult.Value!));
+        return Ok(DataProviderDto.Create(updatedProvider));
     }
 
     [HttpDelete("{providerId:required}")]
     public async Task<IActionResult> RemoveDataProvider(Guid providerId)
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userId = this.User.GetUserGuid();
 
-        if (userIdResult.IsFailure)
-        {
-            return BadRequest("Something wrong with cookies. Please re-login.");
-        }
-
-        var providersResult = await _providerService.RemoveDataProvider(providerId, userIdResult.Value);
-
-        if (providersResult.IsFailure)
-        {
-            return BadRequest(providersResult.Error);
-        }
+        await _providerService.RemoveDataProvider(providerId, userId);
 
         return Ok();
     }
@@ -156,15 +116,10 @@ public sealed class ProvidersController : ControllerBase
             return BadRequest("UserId must be a parseable GUID");
         }
 
-        var provider = await
-            _providerService
+        await _providerService
                 .AddDataProvider(ProviderTypes.Yandex, userId, name, apiToken, refreshToken, expiresAt);
 
-        if (provider.IsFailure)
-        {
-            // make switch
-            return Redirect("/providers");
-        }
+        HttpContext.Response.Cookies.Delete("CloudMusicPlayer_External");
 
         return Redirect("/providers");
     }
@@ -189,15 +144,10 @@ public sealed class ProvidersController : ControllerBase
             return BadRequest("UserId must be a parseable GUID");
         }
 
-        var provider = await
-            _providerService
+        await _providerService
                 .AddDataProvider(ProviderTypes.Dropbox, userId, name, apiToken, refreshToken, expiresAt);
 
-        if (provider.IsFailure)
-        {
-            // make switch
-            return Redirect("/providers");
-        }
+        HttpContext.Response.Cookies.Delete("CloudMusicPlayer_External");
 
         return Redirect("/providers");
     }
@@ -205,20 +155,10 @@ public sealed class ProvidersController : ControllerBase
     [HttpGet("songUrl/{songFileId:required}")]
     public async Task<ActionResult<string>> GetSongUrl(Guid songFileId)
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userId = this.User.GetUserGuid();
 
-        if (userIdResult.IsFailure)
-        {
-            return BadRequest("Something wrong with cookies. Please re-login.");
-        }
+        var url = await _providerService.GetSongFileUrl(songFileId, userId);
 
-        var urlResult = await _providerService.GetSongFileUrl(songFileId, userIdResult.Value);
-
-        if (urlResult.IsFailure)
-        {
-            return BadRequest(urlResult.Error);
-        }
-
-        return Ok(urlResult.Value);
+        return Ok(url);
     }
 }

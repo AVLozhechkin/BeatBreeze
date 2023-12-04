@@ -1,4 +1,5 @@
-﻿using CloudMusicPlayer.Core.Models;
+﻿using CloudMusicPlayer.Core.Enums;
+using CloudMusicPlayer.Core.Models;
 
 namespace CloudMusicPlayer.API.Dtos.Models;
 

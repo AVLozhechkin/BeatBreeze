@@ -1,9 +1,9 @@
 import {Component, inject, OnInit} from '@angular/core';
-import { PlayerComponent } from './feature-player/player.component';
-import {AuthService} from "./shared/services/auth.service";
-import {HeaderComponent} from "./feature-header/header.component";
+import { PlayerComponent } from './features/player/player.component';
+import {AuthService} from "./core/services/auth.service";
+import {HeaderComponent} from "./features/header/header.component";
 import {RouterOutlet} from "@angular/router";
-import {HistoriesService} from "./shared/services/histories.service";
+import {HistoriesService} from "./core/services/histories.service";
 
 @Component({
   standalone: true,
@@ -22,8 +22,14 @@ export class AppComponent implements OnInit {
   private readonly historyService = inject(HistoriesService)
 
 
-  async ngOnInit() {
-    this.authService.refresh();
-    await this.historyService.fetchHistory();
+  ngOnInit() {
+    this.authService.refresh()
+      ?.subscribe();
+    if (this.authService.user())
+      this.historyService.fetchHistory()
+        .subscribe({
+          next: _ => console.log('Fetched history'),
+          error: err => console.log(err)
+        });
   }
 }

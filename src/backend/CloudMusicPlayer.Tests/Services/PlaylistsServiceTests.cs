@@ -2,7 +2,6 @@
 using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Core.Services;
 using CloudMusicPlayer.Core.UnitOfWorks;
-using CSharpFunctionalExtensions;
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
 using Xunit;

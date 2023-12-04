@@ -1,217 +1,191 @@
-﻿using CloudMusicPlayer.Core.DataProviders;
-using CloudMusicPlayer.Core.Errors;
+﻿using CloudMusicPlayer.Core.Enums;
+using CloudMusicPlayer.Core.Exceptions;
+using CloudMusicPlayer.Core.Interfaces;
 using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.UnitOfWorks;
+using Microsoft.Extensions.Logging;
 
 namespace CloudMusicPlayer.Core.Services;
 
-public sealed class ProviderService
+internal sealed class ProviderService : IProviderService
 {
+    private readonly ILogger<ProviderService> _logger;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IEncryptionService _encryptionService;
     private readonly IEnumerable<IExternalProviderService> _externalProviderServices;
 
-    public ProviderService(IUnitOfWork unitOfWork,
-        IEnumerable<IExternalProviderService> externalProviderServices
-        )
+    public ProviderService(
+        ILogger<ProviderService> logger,
+        IUnitOfWork unitOfWork,
+        IEncryptionService encryptionService,
+        IEnumerable<IExternalProviderService> externalProviderServices)
     {
+        _logger = logger;
         _unitOfWork = unitOfWork;
+        _encryptionService = encryptionService;
         _externalProviderServices = externalProviderServices;
     }
 
-    public async Task<Result<List<DataProvider>>> GetAllProvidersByUserId(Guid userId)
+    public async Task<List<DataProvider>> GetAllProvidersByUserId(Guid userId)
     {
-        var providersResult = await _unitOfWork.DataProviderRepository.GetAllByUserIdAsync(userId);
-
-        return providersResult;
+        return await _unitOfWork.DataProviderRepository.GetAllByUserIdAsync(userId, false, true);
     }
 
-    public async Task<Result<DataProvider?>> GetDataProvider(Guid providerId, Guid userId)
+    public async Task<DataProvider> GetDataProvider(Guid providerId, Guid userId)
     {
-        var providerResult = await _unitOfWork.DataProviderRepository.GetAsync(providerId, true);
-
-        if (providerResult.IsFailure)
-        {
-            return providerResult;
-        }
-
-        if (providerResult.Value is not null && providerResult.Value.UserId != userId)
-        {
-            return Result.Failure<DataProvider?>(DomainLayerErrors.NotTheOwner());
-        }
-
-        return providerResult;
-    }
-
-    public async Task<Result<string>> GetSongFileUrl(Guid songFileId, Guid userId)
-    {
-        var songFileResult = await _unitOfWork.SongFileRepository.GetById(songFileId, true);
-
-        if (songFileResult.IsFailure)
-        {
-            return Result.Failure<string>(songFileResult.Error);
-        }
-
-        if (songFileResult.Value?.DataProvider is null)
-        {
-            return Result.Failure<string>(DomainLayerErrors.NotFound());
-        }
-
-        if (songFileResult.Value.DataProvider.UserId != userId)
-        {
-            return Result.Failure<string>(DomainLayerErrors.NotTheOwner());
-        }
-
-        var songFile = songFileResult.Value;
-
-        var dictionary = new Dictionary<string, string>();
-
-        var externalProvider = _externalProviderServices
-            .FirstOrDefault(ep
-                => ep.CanBeExecuted(songFile.DataProvider.ProviderType));
-
-        if (externalProvider is null)
-        {
-            return Result.Failure<string>(DomainLayerErrors.ExternalProviderNotFound());
-        }
-
-        Task<Result> updateDataProvider = null!;
-
-        // If token is expired
-        if (songFile.DataProvider.AccessTokenExpiresAt < DateTimeOffset.UtcNow)
-        {
-            var apiTokenResult = await externalProvider.GetApiToken(songFile.DataProvider.RefreshToken);
-
-            if (apiTokenResult.IsFailure)
-            {
-                return Result.Failure<string>(apiTokenResult.Error);
-            }
-
-            songFile.DataProvider.AccessToken = apiTokenResult.Value.Token;
-            songFile.DataProvider.AccessTokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(apiTokenResult.Value.ExpiresIn);
-
-            updateDataProvider = _unitOfWork.DataProviderRepository.UpdateAsync(songFile.DataProvider, true);
-        }
-
-        // TODO Review task awaiting here
-
-        var urlResult = await externalProvider.GetSongFileUrl(songFile, songFile.DataProvider);
-
-        if (urlResult.IsFailure)
-        {
-            return urlResult; // TODO "Can't fetch song's url"
-        }
-
-        if (updateDataProvider is null)
-        {
-            return Result.Success(urlResult.Value);
-        }
-
-
-        // TODO should I return failure on update? Because if we successfully got the link then token is okay. Review is needed.
-        var updateResult = await updateDataProvider;
-        /*if (updateResult.IsFailure)
-        {
-            return Result.Failure<string>(updateResult.Error);
-        }*/
-
-        return Result.Success(urlResult.Value);
-    }
-
-    public async Task<Result<DataProvider>> AddDataProvider(
-        ProviderTypes providerType,
-        Guid userId,
-        string name,
-        string apiToken,
-        string refreshToken,
-        string expiresAt)
-    {
-        // TODO Check the existing provider
-
-        var dataProviderResult = DataProvider.Create(name, userId, providerType, apiToken, refreshToken, expiresAt);
-
-        if (dataProviderResult.IsFailure)
-        {
-            return Result.Failure<DataProvider>(dataProviderResult.Error);
-        }
-
-        await _unitOfWork.DataProviderRepository.AddAsync(dataProviderResult.Value);
-
-        var externalProviderService = _externalProviderServices
-            .First(s =>
-                s.CanBeExecuted(providerType));
-
-        var songFilesResult = await externalProviderService.GetSongFiles(dataProviderResult.Value);
-
-        if (songFilesResult.IsFailure)
-        {
-            return Result.Failure<DataProvider>(songFilesResult.Error);
-        }
-
-        await _unitOfWork.SongFileRepository.AddRangeAsync(songFilesResult.Value);
-
-        var commitResult = await _unitOfWork.CommitAsync();
-
-        if (commitResult.IsFailure)
-        {
-            return Result.Failure<DataProvider>(commitResult.Error);
-        }
-
-        return dataProviderResult;
-    }
-
-    public async Task<Result<DataProvider>> UpdateDataProvider(Guid providerId, Guid userId)
-    {
-        var providerResult = await _unitOfWork.DataProviderRepository.GetAsync(providerId, true, true);
-
-        if (providerResult.IsFailure)
-        {
-            return providerResult;
-        }
-
-        var provider = providerResult.Value;
+        var provider = await _unitOfWork.DataProviderRepository.GetByIdAsync(providerId, true, true);
 
         if (provider is null)
         {
-            return Result.Failure<DataProvider>(DomainLayerErrors.NotFound());
+            throw NotFoundException.Create<DataProvider>(providerId);
         }
 
         if (provider.UserId != userId)
         {
-            return Result.Failure<DataProvider>(DomainLayerErrors.NotTheOwner());
+            _logger.LogWarning("User ({userId}) requested a data provider ({providerId}), " +
+                               "but it has another owner ({userId})", userId, providerId, provider.UserId);
+            throw NotTheOwnerException.Create<DataProvider>();
+        }
+
+        return provider;
+    }
+
+    public async Task<string> GetSongFileUrl(Guid songFileId, Guid userId)
+    {
+        var songFile = await _unitOfWork.SongFileRepository.GetById(songFileId, true, true);
+
+        if (songFile is null)
+        {
+            throw NotFoundException.Create<SongFile>(songFileId);
+        }
+
+        if (songFile.DataProvider.UserId != userId)
+        {
+            throw NotTheOwnerException.Create<SongFile>(songFileId);
         }
 
         var externalProviderService = _externalProviderServices
-            .First(s =>
-                s.CanBeExecuted(provider.ProviderType));
+            .Single(ep=> ep.CanBeExecuted(songFile.DataProvider.ProviderType));
 
-        var songFilesResult = await externalProviderService.GetSongFiles(provider);
+        Task? updateDataProvider = null;
 
-        UpdateSongFiles(provider, songFilesResult.Value);
-        provider.UpdatedAt = DateTimeOffset.UtcNow;
-
-        await _unitOfWork.DataProviderRepository.UpdateAsync(provider);
-
-        var result = await _unitOfWork.CommitAsync();
-
-        if (result.IsFailure)
+        if (songFile.DataProvider.AccessTokenExpiration < DateTimeOffset.UtcNow)
         {
-            return Result.Failure<DataProvider>(result.Error);
+            var accessToken = await externalProviderService.GetAccessToken(songFile.DataProvider.RefreshToken);
+
+            var encryptedAccessToken = _encryptionService.Encrypt(accessToken.Token);
+
+            var expirationDate = DateTimeOffset.UtcNow.AddSeconds(accessToken.ExpiresIn);
+
+            songFile.DataProvider.UpdateAccessToken(encryptedAccessToken, expirationDate);
+
+            updateDataProvider = _unitOfWork.DataProviderRepository.UpdateAsync(songFile.DataProvider, true);
         }
 
-        return providerResult;
+        string url = await externalProviderService.GetSongFileUrl(songFile, songFile.DataProvider);
+
+        if (updateDataProvider is not null)
+        {
+            await updateDataProvider;
+            _logger.LogInformation("Updated access token for provider ({providerId})", songFile.DataProvider.Id);
+        }
+
+        return url;
     }
 
-    public async Task<Result> RemoveDataProvider(Guid providerId, Guid userId)
+    public async Task AddDataProvider(
+        ProviderTypes providerType,
+        Guid userId,
+        string name,
+        string accessToken,
+        string refreshToken,
+        string expiresAt)
     {
+        var existingProvider = await _unitOfWork
+            .DataProviderRepository.GetByTypeAndName(providerType, name, userId, true);
 
-        var result = await _unitOfWork.DataProviderRepository.RemoveAsync(providerId, userId, true);
-
-        if (result.IsFailure)
+        if (existingProvider is not null)
         {
-            return Result.Failure(result.Error);
+            return;
         }
 
-        return Result.Success();
+        var encryptedToken = _encryptionService.Encrypt(accessToken);
+        var encryptedRefreshToken = _encryptionService.Encrypt(refreshToken);
+        var tokenExpiresAt = DateTimeOffset.Parse(expiresAt);
+
+        var dataProvider = new DataProvider(name, userId, providerType, encryptedToken, encryptedRefreshToken, tokenExpiresAt);
+
+        await _unitOfWork.DataProviderRepository.AddAsync(dataProvider, false);
+
+        var externalProviderService = _externalProviderServices
+            .Single(s => s.CanBeExecuted(providerType));
+
+        var songFiles = await externalProviderService.GetSongFiles(dataProvider);
+
+        await _unitOfWork.SongFileRepository.AddRangeAsync(songFiles, false);
+
+        await _unitOfWork.CommitAsync();
+
+        _logger.LogInformation("User ({userId}) added a provider ({providerId}) with ({songFilesCount}) songfiles",
+            userId, dataProvider.Id, songFiles.Count);
+    }
+
+    public async Task<DataProvider> UpdateDataProvider(Guid providerId, Guid userId)
+    {
+        var provider = await _unitOfWork.DataProviderRepository.GetByIdAsync(providerId, true, false);
+
+        if (provider is null)
+        {
+            throw NotFoundException.Create<DataProvider>(providerId);
+        }
+
+        if (provider.UserId != userId)
+        {
+            throw NotTheOwnerException.Create<DataProvider>(providerId);
+        }
+
+        var externalProviderService = _externalProviderServices
+            .Single(s => s.CanBeExecuted(provider.ProviderType));
+
+        // TODO Update token using refresh
+        bool tokenUpdateRequires = provider.AccessTokenExpiration < DateTimeOffset.UtcNow;
+
+        if (tokenUpdateRequires)
+        {
+            var accessToken = await externalProviderService.GetAccessToken(provider.RefreshToken);
+
+            var encryptedAccessToken = _encryptionService.Encrypt(accessToken.Token);
+
+            var expirationDate = DateTimeOffset.UtcNow.AddSeconds(accessToken.ExpiresIn);
+
+            provider.UpdateAccessToken(encryptedAccessToken, expirationDate);
+
+            await _unitOfWork.DataProviderRepository.UpdateAsync(provider, false);
+        }
+
+        var songFiles = await externalProviderService.GetSongFiles(provider);
+
+        UpdateSongFiles(provider, songFiles);
+
+        await _unitOfWork.CommitAsync();
+
+        if (tokenUpdateRequires)
+        {
+            _logger.LogInformation("User ({userId}) updated songFiles for provider ({providerId}) and updated " +
+                                   "an access token for it",userId, providerId);
+        }
+        else
+        {
+            _logger.LogInformation("User ({userId}) updated songFiles for provider ({providerId})",
+                userId, providerId);
+        }
+
+        return provider;
+    }
+
+    public async Task RemoveDataProvider(Guid providerId, Guid userId)
+    {
+        await _unitOfWork.DataProviderRepository.RemoveAsync(providerId, userId, true);
+        _logger.LogInformation("User ({userId}) removed provider ({providerId})",userId, providerId);
     }
 
     private void UpdateSongFiles(DataProvider provider, IReadOnlyCollection<SongFile> newSongs)
@@ -225,16 +199,14 @@ public sealed class ProviderService
 
         foreach (var oldSong in provider.SongFiles)
         {
-            if (!newSongsDictionary.TryGetValue(oldSong.FileId, out SongFile? value))
+            if (!newSongsDictionary.Remove(oldSong.FileId, out SongFile? _))
             {
-                _unitOfWork.SongFileRepository.RemoveAsync(oldSong);
-            }
-            else
-            {
-                newSongsDictionary.Remove(oldSong.FileId);
+                _unitOfWork.SongFileRepository.RemoveAsync(oldSong, false);
             }
         }
 
-        _unitOfWork.SongFileRepository.AddRangeAsync(newSongsDictionary.Values);
+        _unitOfWork.SongFileRepository.AddRangeAsync(newSongsDictionary.Values,false);
+
+        provider.UpdatedAt = DateTimeOffset.UtcNow;
     }
 }

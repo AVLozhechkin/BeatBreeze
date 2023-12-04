@@ -1,110 +1,87 @@
-﻿using System.Security.Claims;
+﻿using System.Security.Authentication;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
-using CloudMusicPlayer.API.Errors;
-using CloudMusicPlayer.Core;
-using CloudMusicPlayer.Core.Errors;
+using CloudMusicPlayer.Core.Interfaces;
 using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.Services;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.API.Services;
 
 public sealed class AuthService
 {
+    private readonly ILogger<AuthService> _logger;
     private readonly IPasswordHasher<User> _hasher;
-    private readonly UserService _userService;
+    private readonly IUserService _userService;
     private const string PasswordPattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[*.!@$%^&(){}[\\]:;<>,.?/~_+-=|\\\\]).{8,32}$";
 
-    public AuthService(IPasswordHasher<User> hasher, UserService userService)
+    public AuthService(ILogger<AuthService> logger, IPasswordHasher<User> hasher, IUserService userService)
     {
+        _logger = logger;
         _hasher = hasher;
         _userService = userService;
     }
 
-    public async Task<Result<User>> CreateUser(HttpContext httpContext, string email, string name, string password)
+    public async Task<User> CreateUser(HttpContext httpContext, string email, string password)
     {
-        var passwordHashResult = HashPassword(password);
+        var passwordHash = HashPassword(password);
 
-        if (passwordHashResult.IsFailure)
-        {
-            return Result.Failure<User>(passwordHashResult.Error);
-        }
+        var user = await _userService.CreateUser(email, passwordHash);
 
-        var userCreationResult = await _userService.CreateUser(email, name, passwordHashResult.Value);
+        await SignInWithToken(httpContext, user);
 
-        if (userCreationResult.IsFailure)
-        {
-            return Result.Failure<User>(userCreationResult.Error);
-        }
-
-        await SignInWithCookies(httpContext, userCreationResult.Value);
-
-        return userCreationResult;
+        return user;
     }
 
-    public async Task<Result<User>> SignIn(HttpContext httpContext, string email, string password)
+    public async Task<User> SignIn(HttpContext httpContext, string email, string password)
     {
-        var userSearchResult = await _userService.GetUserByEmail(email);
+        var user = await _userService.GetUserByEmail(email);
 
-        if (userSearchResult.IsFailure)
+        if (user is null)
         {
-            return userSearchResult;
+            throw new AuthenticationException("User for authentication was not found");
         }
 
-        if (userSearchResult.Value is null)
-        {
-            return Result.Failure<User>(DomainLayerErrors.NotFound());
-        }
-
-        var verificationResult = _hasher.VerifyHashedPassword(null!, userSearchResult.Value.PasswordHash, password);
+        var verificationResult = _hasher.VerifyHashedPassword(null!, user.PasswordHash, password);
 
         if (verificationResult == PasswordVerificationResult.Failed)
         {
-            return Result.Failure<User>(ApplicationLayerErrors.Auth.PasswordVerificationFailure());
+            throw new AuthenticationException("Password validation failed");
         }
 
-        await SignInWithCookies(httpContext, userSearchResult.Value);
+        await SignInWithToken(httpContext, user);
 
-        return Result.Success(userSearchResult.Value);
+        return user;
     }
 
-    private async Task SignInWithCookies(HttpContext ctx, User user)
+    private async Task SignInWithToken(HttpContext ctx, User user)
     {
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.Name),
         };
 
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var identity = new ClaimsIdentity(claims, BearerTokenDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
         await ctx.SignInAsync(principal);
     }
 
-    private Result<string> HashPassword(string password)
+    private string HashPassword(string password)
     {
-        var validationResult = ValidatePasswordRequirements(password);
-
-        if (validationResult.IsFailure)
-        {
-            return Result.Failure<string>(validationResult.Error);
-        }
-
-        var passwordHash = _hasher.HashPassword(null!, password);
-
-        return Result.Success(passwordHash);
+        ValidatePasswordRequirements(password);
+        return _hasher.HashPassword(null!, password);
     }
 
-    private static Result ValidatePasswordRequirements(string password)
+    private static void ValidatePasswordRequirements(string password)
     {
-        if (Regex.IsMatch(password, PasswordPattern, RegexOptions.None, TimeSpan.FromSeconds(1)))
+        if (!Regex.IsMatch(password, PasswordPattern, RegexOptions.None, TimeSpan.FromSeconds(1)))
         {
-            return Result.Success();
+            throw new ArgumentException(nameof(password),
+                "Password must contain at least one digit, one lowercase character, one uppercase character, "
+                + "one special character, at least 8 characters in length, but no more than 32");
         }
-
-        return Result.Failure(ApplicationLayerErrors.Auth.PasswordDoesNotMeetRequirements());
     }
 }

@@ -1,9 +1,6 @@
-﻿using CloudMusicPlayer.Core;
-using CloudMusicPlayer.Core.Errors;
-using CloudMusicPlayer.Core.Repositories;
-using CloudMusicPlayer.Core.UnitOfWorks;
+﻿using CloudMusicPlayer.Core.Interfaces;
+using CloudMusicPlayer.Core.Interfaces.Repositories;
 using CloudMusicPlayer.Infrastructure.Database;
-using CloudMusicPlayer.Infrastructure.Errors;
 using CloudMusicPlayer.Infrastructure.Repositories;
 
 namespace CloudMusicPlayer.Infrastructure.UnitOfWorks;
@@ -40,7 +37,7 @@ internal sealed class UnitOfWork : IUnitOfWork
     public IHistoryRepository HistoryRepository =>
         _historyRepository ??= new HistoryRepository(_applicationContext);
 
-    public async Task<Result> CommitAsync()
+    public async Task CommitAsync()
     {
         await using var dbContextTransaction = await _applicationContext.Database.BeginTransactionAsync();
 
@@ -52,9 +49,6 @@ internal sealed class UnitOfWork : IUnitOfWork
         catch (Exception ex)
         {
             await dbContextTransaction.RollbackAsync();
-            return Result.Failure(DataLayerErrors.Database.TransactionError());
         }
-
-        return Result.Success();
     }
 }

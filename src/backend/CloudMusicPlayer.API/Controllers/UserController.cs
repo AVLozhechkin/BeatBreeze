@@ -1,19 +1,17 @@
 ﻿using CloudMusicPlayer.API.Dtos.Models;
 using CloudMusicPlayer.API.Utils;
-using CloudMusicPlayer.Core.Services;
+using CloudMusicPlayer.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloudMusicPlayer.API.Controllers;
 
-[ApiController]
 [Authorize]
-[Route("api/[controller]")]
-public sealed class UsersController : ControllerBase
+public sealed class UsersController : BaseController
 {
-    private readonly UserService _userService;
+    private readonly IUserService _userService;
 
-    public UsersController(UserService userService)
+    public UsersController(IUserService userService)
     {
         _userService = userService;
     }
@@ -21,21 +19,16 @@ public sealed class UsersController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<UserDto>> GetCurrentUser()
     {
-        var userIdResult = this.User.GetUserGuid();
+        var userId = this.User.GetUserGuid();
 
-        if (userIdResult.IsFailure)
+        var user = await _userService.GetUserById(userId);
+
+        if (user is null)
         {
             return Unauthorized("Something wrong with cookies. Please re-login.");
         }
 
-        var user = await _userService.GetUserById(userIdResult.Value);
-
-        if (user.IsFailure || user.Value is null)
-        {
-            return Unauthorized("Something wrong with cookies. Please re-login.");
-        }
-
-        var dto = UserDto.Create(user.Value);
+        var dto = UserDto.Create(user);
 
         return Ok(dto);
     }

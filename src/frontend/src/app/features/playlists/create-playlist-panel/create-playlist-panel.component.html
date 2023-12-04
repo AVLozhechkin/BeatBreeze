@@ -1,0 +1,20 @@
+<div class="flex flex-col justify-between gap-x-5">
+  <span class="text-xl">Create new playlist</span>
+  <div class="flex">
+    <mat-form-field class="w-full">
+      <mat-label>Put playlist name here</mat-label>
+      <input matInput type="text" [formControl]="playlistName">
+      @if (playlistName.hasError('required')) {
+        <mat-error>
+          Please, provide a name for the playlist
+        </mat-error>
+      }
+      @if (!playlistName.hasError('required') && playlistName.hasError('minlength')) {
+        <mat-error>
+          Name must have at least 3 characters
+        </mat-error>
+      }
+    </mat-form-field>
+    <button mat-flat-button class="h-full" color="primary" (click)="createTopic()">Create</button>
+  </div>
+</div>

@@ -1,14 +1,13 @@
 ﻿using CloudMusicPlayer.API.Dtos.Models;
 using CloudMusicPlayer.API.Dtos.Requests;
+using CloudMusicPlayer.API.Filters;
 using Microsoft.AspNetCore.Authentication;
 using CloudMusicPlayer.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CloudMusicPlayer.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public sealed class AuthController : ControllerBase
+public sealed class AuthController : BaseController
 {
     private readonly AuthService _authService;
 
@@ -18,39 +17,18 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("create-user")]
-    public async Task<IActionResult> CreateUser(CreateUserRequest createRequest)
+    [ModelValidation]
+    public async Task CreateUser(CreateUserRequest createRequest)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        var userCreationResult = await _authService.CreateUser(HttpContext, createRequest.Email, createRequest.Name, createRequest.Password);
-
-        if (userCreationResult.IsFailure)
-        {
-            return BadRequest(userCreationResult.Error);
-        }
-
-        return Ok(UserDto.Create(userCreationResult.Value));
+        await _authService.CreateUser(HttpContext, createRequest.Email, createRequest.Password);
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginRequest loginRequest)
+    [ModelValidation]
+    public async Task<UserDto> Login(LoginRequest loginRequest)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        var signInResult = await _authService.SignIn(HttpContext, loginRequest.Email, loginRequest.Password);
-
-        if (signInResult.IsFailure)
-        {
-            return Unauthorized("Your email or password is incorrect");
-        }
-
-        return Ok(UserDto.Create(signInResult.Value));
+        var user = await _authService.SignIn(HttpContext, loginRequest.Email, loginRequest.Password);
+        return UserDto.Create(user);
     }
 
     [HttpGet("logout")]

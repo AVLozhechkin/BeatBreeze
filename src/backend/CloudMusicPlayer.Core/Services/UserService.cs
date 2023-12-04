@@ -1,49 +1,43 @@
-﻿using CloudMusicPlayer.Core.Errors;
+﻿using CloudMusicPlayer.Core.Interfaces;
+using CloudMusicPlayer.Core.Interfaces.Repositories;
 using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace CloudMusicPlayer.Core.Services;
 
-public sealed class UserService
+internal sealed class UserService : IUserService
 {
+    private readonly ILogger<UserService> _logger;
     private readonly IUserRepository _userRepository;
 
-    public UserService(IUserRepository userRepository)
+    public UserService(ILogger<UserService> logger, IUserRepository userRepository)
     {
+        _logger = logger;
         _userRepository = userRepository;
     }
 
-    public async Task<Result<User>> CreateUser(string email, string name, string passwordHash)
+    public async Task<User> CreateUser(string email, string passwordHash)
     {
-        var userCreationResult = User.Create(email, name, passwordHash);
+        var user = new User(email, passwordHash);
 
-        if (userCreationResult.IsFailure)
-        {
-            return Result.Failure<User>(userCreationResult.Error);
-        }
+        await _userRepository.AddAsync(user, true);
+        _logger.LogInformation("User ({userId}) was created", user.Id);
 
-        var result = await _userRepository.AddAsync(userCreationResult.Value, true);
-
-        if (result.IsFailure)
-        {
-            return Result.Failure<User>(result.Error);
-        }
-
-        return Result.Success(userCreationResult.Value);
+        return user;
 
     }
 
-    public async Task<Result<User?>> GetUserById(Guid userId)
+    public async Task<User?> GetUserById(Guid userId)
     {
-        var userResult = await _userRepository.GetByIdAsync(userId);
+        var user = await _userRepository.GetByIdAsync(userId, true);
 
-        return userResult;
+        return user;
     }
 
-    public async Task<Result<User?>> GetUserByEmail(string email)
+    public async Task<User?> GetUserByEmail(string email)
     {
-        var userResult = await _userRepository.GetByEmailAsync(email);
+        var user = await _userRepository.GetByEmailAsync(email, true);
 
-        return userResult;
+        return user;
     }
 }

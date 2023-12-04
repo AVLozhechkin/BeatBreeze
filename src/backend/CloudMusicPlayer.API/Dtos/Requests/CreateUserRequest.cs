@@ -14,9 +14,4 @@ public record CreateUserRequest
     [MinLength(8)]
     [MaxLength(255)]
     public required string PasswordConfirmation { get; set; }
-
-    [MinLength(2)]
-    [MaxLength(30)]
-    public required string Name { get; set; }
-
 }

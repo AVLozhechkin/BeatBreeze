@@ -1,141 +1,122 @@
-﻿using CloudMusicPlayer.Core.Errors;
+﻿using CloudMusicPlayer.Core.Exceptions;
+using CloudMusicPlayer.Core.Interfaces;
 using CloudMusicPlayer.Core.Models;
-using CloudMusicPlayer.Core.UnitOfWorks;
+using Microsoft.Extensions.Logging;
 
 namespace CloudMusicPlayer.Core.Services;
 
-public sealed class PlaylistService
+internal sealed class PlaylistService : IPlaylistService
 {
+    private readonly ILogger<PlaylistService> _logger;
     private readonly IUnitOfWork _unitOfWork;
 
-    public PlaylistService(IUnitOfWork unitOfWork)
+    public PlaylistService(ILogger<PlaylistService> logger, IUnitOfWork unitOfWork)
     {
+        _logger = logger;
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<List<Playlist>>> GetPlaylistsByUserId(Guid userId)
+    public async Task<List<Playlist>> GetPlaylistsByUserId(Guid userId)
     {
-        var playlistsResult = await _unitOfWork.PlaylistRepository.GetAllByUserIdAsync(userId, true);
-
-        return playlistsResult;
+        return await _unitOfWork.PlaylistRepository.GetAllByUserIdAsync(userId, true, true);
     }
 
-    public async Task<Result<Playlist?>> GetPlaylistById(Guid playlistId, Guid userId)
+    public async Task<Playlist> GetPlaylistById(Guid playlistId, Guid userId)
     {
-        var playlistResult = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true);
+        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true, true);
 
-        if (playlistResult.IsFailure)
+        if (playlist is null)
         {
-            return playlistResult;
+            throw NotFoundException.Create<Playlist>();
         }
 
-        if (playlistResult.Value is not null && playlistResult.Value.UserId != userId)
+        if (playlist.UserId != userId)
         {
-            return Result.Failure<Playlist?>(DomainLayerErrors.NotTheOwner());
+            _logger.LogWarning("User ({userId}) requested a playlist ({playlistId}), " +
+                               "but it has another owner ({userId})", userId, playlistId, playlist.UserId);
+            throw NotTheOwnerException.Create<Playlist>();
         }
 
-        return playlistResult;
+        return playlist;
     }
 
-    public async Task<Result<Playlist>> CreatePlaylist(Guid userId, string playlistName)
+    public async Task<Playlist> CreatePlaylist(Guid userId, string playlistName)
     {
-        var playlistCreationResult = Playlist.Create(userId, playlistName);
+        var playlist = new Playlist(userId, playlistName);
 
-        var addResult = await _unitOfWork.PlaylistRepository.AddAsync(playlistCreationResult.Value, true);
+        await _unitOfWork.PlaylistRepository.AddAsync(playlist, true);
+        _logger.LogInformation("User ({userId}) created a playlist ({playlistId})",userId, playlist.Id);
 
-        if (addResult.IsFailure)
-        {
-            return Result.Failure<Playlist>(addResult.Error);
-        }
-
-        return playlistCreationResult;
+        return playlist;
     }
 
-    public async Task<Result> DeletePlaylist(Guid playlistId, Guid userId)
+    public async Task DeletePlaylist(Guid playlistId, Guid userId)
     {
-        var removeResult = await _unitOfWork.PlaylistRepository.RemoveAsync(playlistId, userId, true);
-
-        if (removeResult.IsFailure)
-        {
-            return Result.Failure(removeResult.Error);
-        }
-
-        return removeResult;
+        await _unitOfWork.PlaylistRepository.RemoveAsync(playlistId, userId, true);
+        _logger.LogInformation("User ({userId}) removed a playlist ({playlistId})", userId, playlistId);
     }
 
-    public async Task<Result<Playlist>> AddToPlaylist(Guid playlistId, Guid songFileId, Guid userId)
+    public async Task<Playlist> AddToPlaylist(Guid playlistId, Guid songFileId, Guid userId)
     {
-        var playlistResult = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, false);
+        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true, true);
 
-        if (playlistResult.IsFailure)
+        if (playlist is null)
         {
-            return playlistResult;
+            throw NotFoundException.Create<Playlist>(playlistId);
         }
 
-        if (playlistResult.Value is null)
+        if (playlist.UserId != userId)
         {
-            return Result.Failure<Playlist>(DomainLayerErrors.NotFound());
+            _logger.LogWarning("User ({userId}) is trying to add a songFile ({songFileId}) to a " +
+                               "playlist ({playlistId}), but it has another owner ({userId})",
+                userId, songFileId, playlistId, playlist.UserId);
+            throw NotTheOwnerException.Create<Playlist>(playlistId);
         }
 
-        if (playlistResult.Value.UserId != userId)
-        {
-            return Result.Failure<Playlist>(DomainLayerErrors.NotTheOwner());
-        }
+        var item = new PlaylistItem(playlistId, songFileId);
 
-        var item = new PlaylistItem
-        {
-            PlaylistId = playlistId,
-            SongFileId = songFileId
-        };
+        await _unitOfWork.PlaylistItemRepository.AddAsync(item, true);
 
-        var addResult = await _unitOfWork.PlaylistItemRepository.AddAsync(item, true);
+        _logger.LogInformation("User ({userId}) added a songFile ({songFileId}) to a playlist ({playlistId})",
+            userId, songFileId, playlistId);
 
-        if (addResult.IsFailure)
-        {
-            return Result.Failure<Playlist>(addResult.Error);
-        }
+        playlist.PlaylistItems.Add(item);
 
-        playlistResult.Value.PlaylistItems.Add(item);
-
-        return playlistResult;
+        return playlist;
     }
 
-    public async Task<Result<Playlist>> RemoveFromPlaylist(Guid playlistId, Guid songFileId, Guid userId)
+    public async Task<Playlist> RemoveFromPlaylist(Guid playlistId, Guid songFileId, Guid userId)
     {
-        var playlistResult = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true);
+        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true, true);
 
-        if (playlistResult.IsFailure)
+        if (playlist is null)
         {
-            return playlistResult;
+            throw NotFoundException.Create<Playlist>(playlistId);
         }
 
-        if (playlistResult.Value is null)
+        if (playlist.UserId != userId)
         {
-            return Result.Failure<Playlist>(DomainLayerErrors.NotFound());
+            _logger.LogWarning("User ({userId}) is trying to remove a songFile ({songFileId}) from a " +
+                               "playlist ({playlistId}), but it has another owner ({userId})",
+                userId, songFileId, playlistId, playlist.UserId);
+            throw NotTheOwnerException.Create<Playlist>(playlistId);
         }
 
-        if (playlistResult.Value.UserId != userId)
-        {
-            return Result.Failure<Playlist>(DomainLayerErrors.NotTheOwner());
-        }
-
-
-        var item = playlistResult.Value.PlaylistItems.FirstOrDefault(i => i.SongFileId == songFileId);
+        var item = playlist.PlaylistItems.FirstOrDefault(i => i.SongFileId == songFileId);
 
         if (item is null)
         {
-            return Result.Failure<Playlist>(DomainLayerErrors.Playlist.NoPlaylistItem());
+            // TODO CHECK WHY I LOOK FOR PLAYLISTITEM BY PLAYLISTID !!!!
+            throw NotFoundException.Create<PlaylistItem>(default);
         }
 
-        var result = await _unitOfWork.PlaylistItemRepository.RemoveAsync(item.Id, true);
+        await _unitOfWork.PlaylistItemRepository.RemoveAsync(item.Id, true);
 
-        if (result.IsFailure)
-        {
-            return Result.Failure<Playlist>(result.Error);
-        }
+        _logger.LogInformation("User ({userId}) removed a songFile ({songFileId}) from a playlist ({playlistId})",
+            userId, songFileId, playlistId);
 
-        playlistResult.Value.PlaylistItems.Remove(item);
+        playlist.PlaylistItems.Remove(item);
 
-        return playlistResult;
+        return playlist;
     }
 }
