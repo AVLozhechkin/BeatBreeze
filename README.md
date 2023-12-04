@@ -1,6 +1,6 @@
 # CloudMusicPlayer
 
-ASP.NET Core + Angular music player for music from Yandex.Disk (and Google Drive/Dropbox later)
+ASP.NET Core + Angular music player for music from Yandex.Disk/Dropbox (and Google Drive later. Maybe I will add something else because it is easy to implement)
 
 # О проекте
 
