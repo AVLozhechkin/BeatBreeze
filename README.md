@@ -1,6 +1,6 @@
 # CloudMusicPlayer
 
-ASP.NET Core + Angular music player for music from Yandex.Disk (and Google Drive/Dropbox later)
+ASP.NET Core + Angular music player for music from Yandex.Disk/Dropbox (and Google Drive later. Maybe I will add something else because it is easy to implement)
 
 # О проекте
 
@@ -22,6 +22,7 @@ ASP.NET Core + Angular music player for music from Yandex.Disk (and Google Drive
 Здесь пользователь может добавлять разные источники данных (провайдеры) - Яндекс.Диск, Dropbox и (чуть позже будет добавлен) Google Drive при помощи OAuth. 
 На картинке представлен профиль пользователя, у которого добавлены Яндекс.Диск и Dropbox.
 Возможно кнопку Update стоит назвать Sync или как-то так, но это потом.
+
 <img src="./docs/assets/providers-page.png" height="300"/>
 
 Это страница самого провайдера, в которую можно попасть через кнопку View на странице провайдеров. Здесь представлено дерево файлов из подключенного провайдера. Каждую песню можно либо запустить как отдельную, либо добавить в плейлист или очередь проигрывания.
