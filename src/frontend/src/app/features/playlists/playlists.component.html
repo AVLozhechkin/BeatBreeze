@@ -1,9 +1,24 @@
-@if (this.isLoading) {
+@switch (contentState()) {
+@case ("loading") {
 <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-} @else {
-<div class="container mx-auto flex flex-col justify-center pt-10">
-  <cmp-create-playlist-panel></cmp-create-playlist-panel>
-  <table mat-table [dataSource]="this.playlists!" class="mat-elevation-z8">
+}
+@case ("initialized") {
+<div class="container mx-auto flex justify-center flex-col pt-10">
+  <div class="flex justify-between w-full p-2">
+    <span class="text-xl">Playlists</span>
+    <div class="flex gap-x-2">
+      <button mat-flat-button (click)="openCreatePlaylistDialog()">
+        <mat-icon>add</mat-icon>
+        Create new playlist</button>
+    </div>
+  </div>
+  @if ((this.playlistsService.playlists | async)?.length === 0) {
+  <div class="flex justify-between w-full p-2">
+    You have no playlists.
+    <!--TODO create some kind of form or anything to create a playlist-->
+  </div>
+  } @else {
+  <table mat-table [dataSource]="this.playlistsService.playlists" class="mat-elevation-z8">
 
     <!-- Position Column -->
     <ng-container matColumnDef="position">
@@ -26,19 +41,32 @@
     <!-- Size Column -->
     <ng-container matColumnDef="size">
       <th mat-header-cell *matHeaderCellDef> Size </th>
-      <td mat-cell *matCellDef="let playlist">0</td>
+      <td mat-cell *matCellDef="let playlist">{{playlist.size}}</td>
     </ng-container>
 
     <!-- Buttons Column -->
     <ng-container matColumnDef="buttons">
-      <th mat-header-cell *matHeaderCellDef> Manage </th>
+      <th mat-header-cell *matHeaderCellDef class="text-center">
+        <div class="flex justify-center w-full">
+          Manage
+        </div>
+      </th>
       <td mat-cell *matCellDef="let playlist">
-        <button mat-flat-button color="primary" [routerLink]="playlist.id">View</button>
+        <cmp-playlists-buttons [playlist]="playlist"></cmp-playlists-buttons>
       </td>
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="['position', 'name', 'updatedAt', 'size', 'buttons']"></tr>
     <tr mat-row *matRowDef="let row; columns: ['position', 'name', 'updatedAt', 'size', 'buttons'];"></tr>
   </table>
+  }
 </div>
+}
+@default {
+<div class="container mx-auto flex justify-center flex-col pt-10">
+  <div class="flex justify-center w-full p-2">
+    Something went wrong. Please, try again later
+  </div>
+</div>
+}
 }

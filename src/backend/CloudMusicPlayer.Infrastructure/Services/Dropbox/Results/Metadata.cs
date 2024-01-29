@@ -2,7 +2,7 @@
 
 namespace CloudMusicPlayer.Infrastructure.Services.Dropbox.Results;
 
-internal record Metadata
+internal sealed record Metadata
 {
     [JsonPropertyName(".tag")]
     public required string Tag { get; set; }
@@ -20,5 +20,5 @@ internal record Metadata
     public ulong Size { get; set; }
 
     [JsonPropertyName("content_hash")]
-    public string ContentHash { get; set; }
+    public string ContentHash { get; set; } = null!;
 }

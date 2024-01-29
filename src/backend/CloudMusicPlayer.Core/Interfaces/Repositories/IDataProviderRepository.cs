@@ -5,8 +5,8 @@ namespace CloudMusicPlayer.Core.Interfaces.Repositories;
 
 public interface IDataProviderRepository
 {
-    public Task<List<DataProvider>> GetAllByUserIdAsync(Guid userId, bool includeSongs, bool asNoTracking);
-    public Task<DataProvider?> GetByIdAsync(Guid providerId, bool includeSongFiles, bool asNoTracking);
+    public Task<List<DataProvider>> GetByUserIdAsync(Guid userId, bool includeMusicFiles, bool asNoTracking);
+    public Task<DataProvider?> GetByIdAsync(Guid providerId, bool includeMusicFiles, bool asNoTracking);
 
     public Task<DataProvider?>
         GetByTypeAndName(ProviderTypes providerType, string name, Guid userId, bool asNoTracking);

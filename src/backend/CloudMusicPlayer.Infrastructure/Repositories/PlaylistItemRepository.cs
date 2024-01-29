@@ -15,7 +15,7 @@ internal sealed class PlaylistItemRepository : IPlaylistItemRepository
         _applicationContext = applicationContext;
     }
 
-    public async Task AddAsync(PlaylistItem playlistItem, bool saveChanges = false)
+    public async Task AddAsync(PlaylistItem playlistItem, bool saveChanges)
     {
         await _applicationContext
             .PlaylistItems
@@ -27,25 +27,23 @@ internal sealed class PlaylistItemRepository : IPlaylistItemRepository
         }
     }
 
-    public async Task RemoveAsync(Guid playlistItemId, bool saveChanges = false)
+    public async Task RemoveAsync(PlaylistItem playlistItem, bool saveChanges)
     {
         if (saveChanges)
         {
             var result = await _applicationContext
                 .PlaylistItems
-                .Where(pi => pi.Id == playlistItemId)
-                .Take(1)
+                .Where(pi => pi.Id == playlistItem.Id)
                 .ExecuteDeleteAsync();
 
             if (result == 0)
             {
-                throw NotFoundException.Create<PlaylistItem>(playlistItemId);
+                throw NotFoundException.Create<PlaylistItem>(playlistItem.Id);
             }
 
             return;
         }
 
-        var playlistItem = new PlaylistItem() { Id = playlistItemId };
         _applicationContext.PlaylistItems.Remove(playlistItem);
     }
 }

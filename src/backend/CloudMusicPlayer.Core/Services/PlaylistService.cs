@@ -16,12 +16,31 @@ internal sealed class PlaylistService : IPlaylistService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<List<Playlist>> GetPlaylistsByUserId(Guid userId)
+    public async Task<List<Playlist>> GetPlaylistsByUserId(Guid userId, bool includeItems)
     {
-        return await _unitOfWork.PlaylistRepository.GetAllByUserIdAsync(userId, true, true);
+        return await _unitOfWork.PlaylistRepository.GetAllByUserIdAsync(userId, includeItems, true);
     }
 
-    public async Task<Playlist> GetPlaylistById(Guid playlistId, Guid userId)
+    public async Task<Playlist> GetPlaylistById(Guid playlistId, Guid userId, bool includeItems)
+    {
+        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, includeItems, true);
+
+        if (playlist is null)
+        {
+            throw NotFoundException.Create<Playlist>();
+        }
+
+        if (playlist.UserId != userId)
+        {
+            _logger.LogWarning("User ({UserId}) requested a playlist ({PlaylistId}), " +
+                               "but it has another owner ({UserId})", userId, playlistId, playlist.UserId);
+            throw NotTheOwnerException.Create<Playlist>();
+        }
+
+        return playlist;
+    }
+
+    public async Task<IList<PlaylistItem>> GetPlaylistItems(Guid playlistId, Guid userId)
     {
         var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true, true);
 
@@ -32,12 +51,12 @@ internal sealed class PlaylistService : IPlaylistService
 
         if (playlist.UserId != userId)
         {
-            _logger.LogWarning("User ({userId}) requested a playlist ({playlistId}), " +
-                               "but it has another owner ({userId})", userId, playlistId, playlist.UserId);
+            _logger.LogWarning("User ({UserId}) requested a playlist items for a playlist ({PlaylistId}), " +
+                               "but it has another owner ({UserId})", userId, playlistId, playlist.UserId);
             throw NotTheOwnerException.Create<Playlist>();
         }
 
-        return playlist;
+        return playlist.PlaylistItems;
     }
 
     public async Task<Playlist> CreatePlaylist(Guid userId, string playlistName)
@@ -45,7 +64,7 @@ internal sealed class PlaylistService : IPlaylistService
         var playlist = new Playlist(userId, playlistName);
 
         await _unitOfWork.PlaylistRepository.AddAsync(playlist, true);
-        _logger.LogInformation("User ({userId}) created a playlist ({playlistId})",userId, playlist.Id);
+        _logger.LogInformation("User ({UserId}) created a playlist ({PlaylistId})", userId, playlist.Id);
 
         return playlist;
     }
@@ -53,12 +72,13 @@ internal sealed class PlaylistService : IPlaylistService
     public async Task DeletePlaylist(Guid playlistId, Guid userId)
     {
         await _unitOfWork.PlaylistRepository.RemoveAsync(playlistId, userId, true);
-        _logger.LogInformation("User ({userId}) removed a playlist ({playlistId})", userId, playlistId);
+        _logger.LogInformation("User ({UserId}) removed a playlist ({PlaylistId})", userId, playlistId);
     }
 
-    public async Task<Playlist> AddToPlaylist(Guid playlistId, Guid songFileId, Guid userId)
+    public async Task<Playlist> AddToPlaylist(Guid playlistId, Guid musicFileId, Guid userId)
     {
-        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true, true);
+        // First we need to get playlist and check if person is an owner of it
+        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true, false);
 
         if (playlist is null)
         {
@@ -67,27 +87,55 @@ internal sealed class PlaylistService : IPlaylistService
 
         if (playlist.UserId != userId)
         {
-            _logger.LogWarning("User ({userId}) is trying to add a songFile ({songFileId}) to a " +
-                               "playlist ({playlistId}), but it has another owner ({userId})",
-                userId, songFileId, playlistId, playlist.UserId);
+            _logger.LogWarning("User ({UserId}) is trying to add a musicFile ({MusicFileId}) to a " +
+                               "playlist ({PlaylistId}), but it has another owner ({UserId})",
+                userId, musicFileId, playlistId, playlist.UserId);
             throw NotTheOwnerException.Create<Playlist>(playlistId);
         }
 
-        var item = new PlaylistItem(playlistId, songFileId);
+        // Second we need to check if item is already in a playlist
+        if (playlist.PlaylistItems.FirstOrDefault(pi => pi.MusicFileId == musicFileId) is not null)
+        {
+            throw AlreadyExistException.Create<PlaylistItem>();
+        }
 
-        await _unitOfWork.PlaylistItemRepository.AddAsync(item, true);
+        // Third we need to get musicFile and check if person is an owner of it
+        var musicFile = await _unitOfWork.MusicFileRepository.GetById(musicFileId, true, true);
 
-        _logger.LogInformation("User ({userId}) added a songFile ({songFileId}) to a playlist ({playlistId})",
-            userId, songFileId, playlistId);
+        if (musicFile is null)
+        {
+            throw NotFoundException.Create<MusicFile>(musicFileId);
+        }
 
-        playlist.PlaylistItems.Add(item);
+        if (musicFile.DataProvider.UserId != userId)
+        {
+            _logger.LogWarning("User ({UserId}) is trying to add a musicFile ({MusicFileId}) to a " +
+                               "playlist ({PlaylistId}), but musicFile has another owner ({UserId})",
+                userId, musicFileId, playlistId, playlist.UserId);
+            throw NotTheOwnerException.Create<MusicFile>(musicFileId);
+        }
+
+        var item = new PlaylistItem(playlistId, musicFileId);
+
+        await _unitOfWork.PlaylistItemRepository.AddAsync(item, false);
+
+        // TODO Fix playlist update, probably it should be placed in playlist but it requires rich domain model mehhhh
+        playlist.UpdatedAt = DateTimeOffset.UtcNow;
+        playlist.Size++;
+
+        await _unitOfWork.CommitAsync();
+
+        item.MusicFile = musicFile;
+
+        _logger.LogInformation("User ({UserId}) added a musicFile ({MusicFileId}) to a playlist ({PlaylistId})",
+            userId, musicFileId, playlistId);
 
         return playlist;
     }
 
-    public async Task<Playlist> RemoveFromPlaylist(Guid playlistId, Guid songFileId, Guid userId)
+    public async Task<Playlist> RemoveFromPlaylist(Guid playlistId, Guid musicFileId, Guid userId)
     {
-        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true, true);
+        var playlist = await _unitOfWork.PlaylistRepository.GetByIdAsync(playlistId, true, false);
 
         if (playlist is null)
         {
@@ -96,26 +144,28 @@ internal sealed class PlaylistService : IPlaylistService
 
         if (playlist.UserId != userId)
         {
-            _logger.LogWarning("User ({userId}) is trying to remove a songFile ({songFileId}) from a " +
-                               "playlist ({playlistId}), but it has another owner ({userId})",
-                userId, songFileId, playlistId, playlist.UserId);
+            _logger.LogWarning("User ({UserId}) is trying to remove a musicFile ({MusicFileId}) from a " +
+                               "playlist ({PlaylistId}), but it has another owner ({UserId})",
+                userId, musicFileId, playlistId, playlist.UserId);
             throw NotTheOwnerException.Create<Playlist>(playlistId);
         }
 
-        var item = playlist.PlaylistItems.FirstOrDefault(i => i.SongFileId == songFileId);
+        var item = playlist.PlaylistItems.FirstOrDefault(i => i.MusicFileId == musicFileId);
 
         if (item is null)
         {
-            // TODO CHECK WHY I LOOK FOR PLAYLISTITEM BY PLAYLISTID !!!!
-            throw NotFoundException.Create<PlaylistItem>(default);
+            throw NotFoundException.Create<PlaylistItem>(Guid.Empty);
         }
 
-        await _unitOfWork.PlaylistItemRepository.RemoveAsync(item.Id, true);
+        await _unitOfWork.PlaylistItemRepository.RemoveAsync(item, false);
 
-        _logger.LogInformation("User ({userId}) removed a songFile ({songFileId}) from a playlist ({playlistId})",
-            userId, songFileId, playlistId);
+        playlist.UpdatedAt = DateTimeOffset.UtcNow;
+        playlist.Size = playlist.Size - 1;
 
-        playlist.PlaylistItems.Remove(item);
+        await _unitOfWork.CommitAsync();
+
+        _logger.LogInformation("User ({UserId}) removed a musicFile ({MusicFileId}) from a playlist ({PlaylistId})",
+            userId, musicFileId, playlistId);
 
         return playlist;
     }

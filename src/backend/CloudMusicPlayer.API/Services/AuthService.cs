@@ -1,25 +1,22 @@
 ﻿using System.Security.Authentication;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
+using CloudMusicPlayer.API.Dtos.Requests;
 using CloudMusicPlayer.Core.Interfaces;
 using CloudMusicPlayer.Core.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.API.Services;
 
 public sealed class AuthService
 {
-    private readonly ILogger<AuthService> _logger;
     private readonly IPasswordHasher<User> _hasher;
     private readonly IUserService _userService;
-    private const string PasswordPattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[*.!@$%^&(){}[\\]:;<>,.?/~_+-=|\\\\]).{8,32}$";
 
-    public AuthService(ILogger<AuthService> logger, IPasswordHasher<User> hasher, IUserService userService)
+    public AuthService(IPasswordHasher<User> hasher, IUserService userService)
     {
-        _logger = logger;
         _hasher = hasher;
         _userService = userService;
     }
@@ -77,11 +74,10 @@ public sealed class AuthService
 
     private static void ValidatePasswordRequirements(string password)
     {
-        if (!Regex.IsMatch(password, PasswordPattern, RegexOptions.None, TimeSpan.FromSeconds(1)))
+        if (!Regex.IsMatch(password, RegexPatterns.PasswordPattern, RegexOptions.None, TimeSpan.FromSeconds(1)))
         {
-            throw new ArgumentException(nameof(password),
-                "Password must contain at least one digit, one lowercase character, one uppercase character, "
-                + "one special character, at least 8 characters in length, but no more than 32");
+            throw new ArgumentException("Password must contain at least one digit, one lowercase character, one uppercase character, "
+                + "one special character, at least 8 characters in length, but no more than 32", nameof(password));
         }
     }
 }

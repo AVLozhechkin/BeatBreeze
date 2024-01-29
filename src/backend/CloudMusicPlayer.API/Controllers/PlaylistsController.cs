@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using CloudMusicPlayer.API.Dtos.Models;
 using CloudMusicPlayer.API.Dtos.Requests;
 using CloudMusicPlayer.API.Filters;
 using CloudMusicPlayer.API.Utils;
@@ -7,6 +6,7 @@ using CloudMusicPlayer.Core.Exceptions;
 using CloudMusicPlayer.Core.Interfaces;
 using CloudMusicPlayer.Core.Models;
 using Microsoft.AspNetCore.Authorization;
+using CloudMusicPlayer.API.Dtos.Models;
 
 namespace CloudMusicPlayer.API.Controllers;
 
@@ -20,71 +20,76 @@ public sealed class PlaylistsController : BaseController
         _playlistService = playlistService;
     }
 
-    [HttpPost]
-    [ModelValidation]
-    public async Task<ActionResult<Playlist>> Create(CreatePlaylistRequest createPlaylistRequest)
+    [HttpGet]
+    public async Task<IEnumerable<PlaylistDto>> GetPlaylistsByUserId(bool includeItems = false)
     {
         var userId = User.GetUserGuid();
 
-        var playlist = await _playlistService.CreatePlaylist(userId, createPlaylistRequest.Name);
+        var playlists = await _playlistService.GetPlaylistsByUserId(userId, includeItems);
 
-        return Ok(playlist);
+        return playlists.Select(PlaylistDto.Create);
     }
 
     [HttpGet("{playlistId:required}")]
-    public async Task<ActionResult<Playlist>> GetById(Guid playlistId)
+    public async Task<PlaylistDto> GetById(Guid playlistId, bool includeItems)
     {
         var userId = User.GetUserGuid();
 
-        var playlist = await _playlistService.GetPlaylistById(playlistId, userId);
+        var playlist = await _playlistService.GetPlaylistById(playlistId, userId, includeItems);
 
         if (playlist is null)
         {
             throw NotFoundException.Create<Playlist>(playlistId);
         }
 
-        return Ok(PlaylistDto.Create(playlist));
+        return PlaylistDto.Create(playlist);
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Playlist>>> GetPlaylistsByUserId()
+    [HttpPost]
+    [ModelValidation]
+    public async Task<PlaylistDto> Create(CreatePlaylistRequest createPlaylistRequest)
     {
+        ArgumentNullException.ThrowIfNull(createPlaylistRequest);
+
         var userId = User.GetUserGuid();
 
-        var playlists = await _playlistService.GetPlaylistsByUserId(userId);
+        var playlist = await _playlistService.CreatePlaylist(userId, createPlaylistRequest.Name);
 
-        return Ok(playlists.Select(PlaylistDto.Create));
+        return PlaylistDto.Create(playlist);
     }
 
+
     [HttpDelete("{playlistId:required}")]
-    public async Task<IActionResult> Delete(Guid playlistId)
+    public async Task Delete(Guid playlistId)
     {
         var userId = User.GetUserGuid();
 
         await _playlistService.DeletePlaylist(playlistId, userId);
-
-        return Ok();
     }
 
-    [HttpPost("addSong")]
-    public async Task<ActionResult<Playlist>> AddSongToPlaylist(PlaylistItemRequest playlistItemRequest)
+    [HttpPost("{playlistId}/add")]
+    public async Task<PlaylistDto> AddSongToPlaylist(PlaylistItemRequest playlistItemRequest, Guid playlistId)
     {
+        ArgumentNullException.ThrowIfNull(playlistItemRequest);
+
         var userId = User.GetUserGuid();
 
         var updatedPlaylist = await _playlistService
-            .AddToPlaylist(playlistItemRequest.PlaylistId, playlistItemRequest.SongFileId, userId);
+            .AddToPlaylist(playlistId, playlistItemRequest.MusicFileId, userId);
 
-        return Ok(updatedPlaylist);
+        return PlaylistDto.Create(updatedPlaylist);
     }
 
-    [HttpPost("removeSong")]
-    public async Task<ActionResult<Playlist>> RemoveSongFromPlaylist(PlaylistItemRequest playlistItemRequest)
+    [HttpPost("{playlistId}/remove")]
+    public async Task<PlaylistDto> RemoveSongFromPlaylist(PlaylistItemRequest playlistItemRequest, Guid playlistId)
     {
-        var userId = this.User.GetUserGuid();
+        ArgumentNullException.ThrowIfNull(playlistItemRequest);
+
+        var userId = User.GetUserGuid();
 
         var updatedPlaylist = await _playlistService
-            .RemoveFromPlaylist(playlistItemRequest.PlaylistId, playlistItemRequest.SongFileId, userId);
+            .RemoveFromPlaylist(playlistId, playlistItemRequest.MusicFileId, userId);
 
-        return Ok(updatedPlaylist);
+        return PlaylistDto.Create(updatedPlaylist);
     }
 }

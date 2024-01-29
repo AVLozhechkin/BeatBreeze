@@ -2,6 +2,7 @@
 using CloudMusicPlayer.Core.Interfaces.Repositories;
 using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Infrastructure.Database;
+using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
@@ -9,13 +10,15 @@ namespace CloudMusicPlayer.Infrastructure.Repositories;
 internal sealed class UserRepository : IUserRepository
 {
     private readonly ApplicationContext _applicationContext;
+    private readonly IExceptionParser _exceptionParser;
 
-    public UserRepository(ApplicationContext applicationContext)
+    public UserRepository(ApplicationContext applicationContext, IExceptionParser exceptionParser)
     {
         _applicationContext = applicationContext;
+        _exceptionParser = exceptionParser;
     }
 
-    public async Task<User?> GetByEmailAsync(string email, bool asNoTracking = true)
+    public async Task<User?> GetByEmailAsync(string email, bool asNoTracking)
     {
         var query = _applicationContext.Users.AsQueryable();
 
@@ -27,7 +30,7 @@ internal sealed class UserRepository : IUserRepository
         return await query.FirstOrDefaultAsync(u => u.Email == email);
     }
 
-    public async Task<User?> GetByIdAsync(Guid userId, bool asNoTracking = true)
+    public async Task<User?> GetByIdAsync(Guid userId, bool asNoTracking)
     {
         var query = _applicationContext.Users.AsQueryable();
 
@@ -39,24 +42,31 @@ internal sealed class UserRepository : IUserRepository
         return await query.FirstOrDefaultAsync(u => u.Id == userId);
     }
 
-    public async Task AddAsync(User user, bool saveChanges = false)
+    public async Task AddAsync(User user, bool saveChanges)
     {
         await _applicationContext.Users.AddAsync(user);
 
         if (saveChanges)
         {
-            await _applicationContext.SaveChangesAsync();
+            try
+            {
+                await _applicationContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (_exceptionParser.IsAlreadyExists(ex))
+            {
+                throw AlreadyExistException.Create<User>();
+            }
         }
     }
 
-    public async Task UpdateAsync(User user, bool saveChanges = false)
+    public async Task UpdateAsync(User user, bool saveChanges)
     {
         if (saveChanges)
         {
             var result = await _applicationContext
                 .Users
                 .Where(u => u.Id == user.Id)
-                .ExecuteUpdateAsync( setters =>
+                .ExecuteUpdateAsync(setters =>
                     setters
                         .SetProperty(u => u.Email, user.Email)
                         .SetProperty(u => u.PasswordHash, user.PasswordHash)
@@ -75,14 +85,13 @@ internal sealed class UserRepository : IUserRepository
         _applicationContext.Users.Update(user);
     }
 
-    public async Task RemoveAsync(Guid userId, bool saveChanges = false)
+    public async Task RemoveAsync(Guid userId, bool saveChanges)
     {
         if (saveChanges)
         {
             var result = await _applicationContext
                 .Users
                 .Where(u => u.Id == userId)
-                .Take(1)
                 .ExecuteDeleteAsync();
 
             if (result == 0)

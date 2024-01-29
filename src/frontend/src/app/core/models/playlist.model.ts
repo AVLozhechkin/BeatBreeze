@@ -1,9 +1,10 @@
-import {Song} from "./song.model";
+import { PlaylistItem } from './playlist-item.model';
 
 export interface Playlist {
-  id: string,
-  name: string,
-  createdAt: Date,
-  updatedAt: Date,
-  songFiles: Song[] | null
+  id: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  size: number;
+  playlistItems: PlaylistItem[] | undefined;
 }

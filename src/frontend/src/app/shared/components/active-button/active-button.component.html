@@ -1,0 +1,7 @@
+<button mat-flat-button class="z-0" [color]="this.color" [disabled]="this.disabled">
+  @if (this.isLoading) {
+  <mat-spinner color="accent" diameter="{{20}}"></mat-spinner>
+  } @else {
+  {{text}}
+  }
+</button>

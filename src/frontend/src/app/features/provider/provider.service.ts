@@ -1,8 +1,7 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
-import {ProvidersApiClient} from "../../core/services/api/providers-api-client";
-import {DataProvider} from "../../core/models/data-provider.model";
-import {convertToTreeNode} from "./utils";
-import {tap} from "rxjs";
+import { inject, Injectable } from '@angular/core';
+import { ProvidersApiClient } from '../../core/services/api/providers-api-client';
+import { DataProvider } from '../../core/models/data-provider.model';
+import { BehaviorSubject, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -10,43 +9,36 @@ import {tap} from "rxjs";
 export class ProviderService {
   private readonly providersApiClient = inject(ProvidersApiClient);
 
-  private readonly _provider = signal<DataProvider | undefined>(undefined);
-  private readonly _isLoading = signal<boolean>(false);
-
-  public readonly provider = computed(() => this._provider());
-  public readonly isLoading = computed(() => this._isLoading());
+  private _provider = new BehaviorSubject<DataProvider | undefined>(undefined);
 
   constructor() {}
 
-  public fetchProvider(providerId: string) {
-    this._isLoading.set(true);
-    return this.providersApiClient
-      .getProvider(providerId)
-      .pipe(
-        tap(fetchedProvider => {
-          this._provider.set(fetchedProvider);
-          this._isLoading.set(false);
-        })
-      )
+  public fetchProvider(providerId: string, includeFiles: boolean) {
+    return this.providersApiClient.getProvider(providerId, includeFiles).pipe(
+      tap((provider) => {
+        console.log(provider);
+        this._provider.next(provider);
+      })
+    );
   }
 
-  public updateProvider(providerId: string) {
-    this._isLoading.set(true);
+  public updateProvider(providerId: string, includeFiles: boolean) {
     return this.providersApiClient
-      .updateProvider(providerId)
+      .updateProvider(providerId, includeFiles)
       .pipe(
-        tap(updatedProvider => {
-          this._provider.set(updatedProvider);
-          this._isLoading.set(false);
+        tap((provider) => {
+          this._provider.next(provider);
         })
       );
   }
 
-  public getProviderTree(providerId: string) {
-    if (this.provider())
-    {
-      return convertToTreeNode(this.provider()?.songFiles!);
-    }
-    return undefined;
+  public removeProvider() {
+    return this.providersApiClient
+      .removeProvider(this._provider.value!.id)
+      .pipe(
+        tap(() => {
+          this._provider.next(undefined);
+        })
+      );
   }
 }

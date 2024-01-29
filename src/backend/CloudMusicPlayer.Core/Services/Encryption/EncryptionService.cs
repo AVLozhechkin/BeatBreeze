@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace CloudMusicPlayer.Core.Services.Encryption;
 
-internal class EncryptionService : IEncryptionService
+internal sealed class EncryptionService : IEncryptionService
 {
     private readonly string _key;
 
@@ -14,7 +14,7 @@ internal class EncryptionService : IEncryptionService
         _key = options.Value.Secret;
     }
 
-    public byte[] Encrypt(string token)
+    public byte[] Encrypt(string valueToEncrypt)
     {
         using var aes = Aes.Create();
 
@@ -30,22 +30,22 @@ internal class EncryptionService : IEncryptionService
         using CryptoStream cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write);
         using (StreamWriter streamWriter = new StreamWriter(cryptoStream))
         {
-            streamWriter.Write(token);
+            streamWriter.Write(valueToEncrypt);
         }
 
         return memoryStream.ToArray();
     }
 
-    public string Decrypt(byte[] encryptedToken)
+    public string Decrypt(byte[] encryptedValue)
     {
         using var aes = Aes.Create();
 
         aes.Key = Encoding.UTF8.GetBytes(_key);
-        aes.IV = encryptedToken.AsSpan(0, 16).ToArray();
+        aes.IV = encryptedValue.AsSpan(0, 16).ToArray();
 
         using var decryptor = aes.CreateDecryptor();
 
-        using MemoryStream memoryStream = new MemoryStream(encryptedToken.AsSpan(16).ToArray());
+        using MemoryStream memoryStream = new MemoryStream(encryptedValue.AsSpan(16).ToArray());
         using CryptoStream cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
         using StreamReader streamReader = new StreamReader(cryptoStream);
 

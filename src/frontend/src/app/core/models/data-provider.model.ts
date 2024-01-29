@@ -1,4 +1,4 @@
-import { Song } from './song.model';
+import { MusicFile } from './musicFile.model';
 import { ProviderTypes } from './provider-types.model';
 
 export interface DataProvider {
@@ -8,5 +8,5 @@ export interface DataProvider {
   providerType: ProviderTypes;
   addedAt: Date;
   updatedAt: Date;
-  songFiles: Song[] | undefined;
+  musicFiles: MusicFile[];
 }

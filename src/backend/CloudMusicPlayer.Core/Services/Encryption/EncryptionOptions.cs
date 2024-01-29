@@ -1,6 +1,6 @@
 ﻿namespace CloudMusicPlayer.Core.Services.Encryption;
 
-internal record EncryptionOptions
+internal sealed record EncryptionOptions
 {
     public const string SectionName = "Encryption";
 

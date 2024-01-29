@@ -1,4 +1,10 @@
-import {Component, inject, OnInit} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,13 +12,16 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTreeModule } from '@angular/material/tree';
 import { RouterLink } from '@angular/router';
-import {CreatePlaylistPanelComponent} from "./create-playlist-panel/create-playlist-panel.component";
-import {PlaylistsService} from "../../core/services/playlists.service";
-import {Playlist} from "../../core/models/playlist.model";
+import { PlaylistsService } from '../../core/services/playlists.service';
+import { ContentState } from 'src/app/shared/models/content-state.enum';
+import { MatDialog } from '@angular/material/dialog';
+import { CreatePlaylistDialogComponent } from './create-playlist-dialog/create-playlist-dialog.component';
+import { PlaylistsButtonsComponent } from './playlists-buttons/playlists-buttons.component';
 
 @Component({
   selector: 'cmp-playlists',
   standalone: true,
+  templateUrl: './playlists.component.html',
   imports: [
     CommonModule,
     MatTableModule,
@@ -21,28 +30,31 @@ import {Playlist} from "../../core/models/playlist.model";
     MatProgressBarModule,
     MatTreeModule,
     RouterLink,
-    CreatePlaylistPanelComponent,
+    PlaylistsButtonsComponent,
   ],
-  templateUrl: './playlists.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PlaylistsComponent implements OnInit
-{
-  private playlistsService = inject(PlaylistsService);
+export class PlaylistsComponent implements OnInit {
+  protected playlistsService = inject(PlaylistsService);
+  private dialog = inject(MatDialog);
 
-  protected isLoading = true
-  protected playlists: Playlist[] | undefined
+  protected contentState = signal<ContentState>('notInitialized');
 
   ngOnInit(): void {
-    this.playlistsService.getPlaylists()
-      .subscribe({
-        next: playlists => {
-          this.playlists = playlists;
-          this.isLoading = false;
-        },
-        error: err => {
-          console.log(err)
-          this.isLoading = false;
-        }
-      })
+    this.contentState.set('loading');
+
+    this.playlistsService.getPlaylists(false).subscribe({
+      error: (err) => {
+        console.log(err);
+        this.contentState.set('error');
+      },
+      complete: () => this.contentState.set('initialized'),
+    });
+  }
+
+  openCreatePlaylistDialog() {
+    this.dialog.open(CreatePlaylistDialogComponent, {
+      width: '400px',
+    });
   }
 }

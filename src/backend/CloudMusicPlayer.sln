@@ -9,7 +9,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudMusicPlayer.Core", "Cl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudMusicPlayer.Infrastructure", "CloudMusicPlayer.Infrastructure\CloudMusicPlayer.Infrastructure.csproj", "{92983024-E127-45C7-B583-EF5EAA23DE75}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloudMusicPlayer.Tests", "CloudMusicPlayer.Tests\CloudMusicPlayer.Tests.csproj", "{DDB01F72-94DC-485E-976D-2EFF6C395860}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker-compose", "docker-compose", "{EEA39D68-0CBD-416D-B290-784F8D86F6D1}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\docker\docker-compose.yml = ..\..\docker\docker-compose.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +32,6 @@ Global
 		{92983024-E127-45C7-B583-EF5EAA23DE75}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{92983024-E127-45C7-B583-EF5EAA23DE75}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{92983024-E127-45C7-B583-EF5EAA23DE75}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DDB01F72-94DC-485E-976D-2EFF6C395860}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DDB01F72-94DC-485E-976D-2EFF6C395860}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DDB01F72-94DC-485E-976D-2EFF6C395860}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DDB01F72-94DC-485E-976D-2EFF6C395860}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

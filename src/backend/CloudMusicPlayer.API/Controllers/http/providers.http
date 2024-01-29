@@ -1,0 +1,49 @@
+# Setup
+
+@host = localhost:5229/api/providers
+
+# Providers controller (requires auth)
+
+# Login as a user
+POST http://localhost:5229/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "test@test.com",
+    "password": "Password123!"
+}
+
+###
+
+# Gets data providers without files by userId
+GET http://{{host}}
+
+###
+
+# Gets data providers with files by userId
+GET http://{{host}}?includeFiles=true
+
+###
+
+# Gets data provider without files by providerId
+GET http://{{host}}/f6d72e5e-cc78-4feb-8103-3a2a51946a43
+
+###
+
+# Gets data provider without files by providerId
+GET http://{{host}}/f6d72e5e-cc78-4feb-8103-3a2a51946a43?includeFiles=true
+
+###
+
+# Requests DataProvider update (sync files with the remote service) and returns updated provider
+PATCH http://{{host}}/f6d72e5e-cc78-4feb-8103-3a2a51946a43
+
+###
+
+# Requests DataProvider update (sync files with the remote service) and returns updated provider with music files
+PATCH http://{{host}}/f6d72e5e-cc78-4feb-8103-3a2a51946a43?includeFiles=true
+
+###
+
+# Deletes DataProvider by Id
+DELETE http://{{host}}/f6d72e5e-cc78-4feb-8103-3a2a51946a43

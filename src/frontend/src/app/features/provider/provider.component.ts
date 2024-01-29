@@ -1,132 +1,120 @@
-import {Component, inject, OnInit} from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
-  MatTreeFlatDataSource,
-  MatTreeFlattener,
-  MatTreeModule,
-} from '@angular/material/tree';
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Song } from '../../core/models/song.model';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { FlatNode, TreeNode } from './tree-node';
-import { FlatTreeControl } from '@angular/cdk/tree';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatMenuModule } from '@angular/material/menu';
 import { PlaylistsService } from '../../core/services/playlists.service';
-import { PlayerService } from '../../core/services/player.service';
 import { ProviderService } from './provider.service';
-import { QueueService } from '../../core/services/queue.service';
-import {Playlist} from "../../core/models/playlist.model";
-import {DataProvider} from "../../core/models/data-provider.model";
-import {transformer} from "./utils";
+import { Playlist } from '../../core/models/playlist.model';
+import { DataProvider } from '../../core/models/data-provider.model';
+import { combineLatest } from 'rxjs';
+import { ContentState } from 'src/app/shared/models/content-state.enum';
+import { ProviderTreeComponent } from './provider-tree/provider-tree.component';
+import { ActiveButtonComponent } from '../../shared/components/active-button/active-button.component';
+import { MatChipsModule } from '@angular/material/chips';
+import { PlayerService2 } from 'src/app/core/services/player.service';
+import { MatButton, MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'cmp-provider',
   standalone: true,
+  templateUrl: './provider.component.html',
   imports: [
     CommonModule,
-    MatTreeModule,
-    MatButtonModule,
-    MatIconModule,
     MatProgressBarModule,
-    MatMenuModule,
+    ProviderTreeComponent,
+    MatChipsModule,
+    MatButtonModule,
+    ActiveButtonComponent,
   ],
-  templateUrl: './provider.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProviderComponent implements OnInit {
   protected readonly providerService = inject(ProviderService);
-  protected readonly playerService = inject(PlayerService);
   protected readonly playlistsService = inject(PlaylistsService);
-  protected readonly queueService = inject(QueueService);
+  protected readonly playerService = inject(PlayerService2);
 
-  private activatedRoute = inject(ActivatedRoute);
-  private router = inject(Router);
-  private providerId: string | undefined;
-  private isDataSourceInitialized = false;
+  protected contentState = signal<ContentState>('notInitialized');
+
+  protected isUpdating = signal(false);
+  protected isRemoving = signal(false);
 
   protected playlists: Playlist[] | undefined;
   protected provider: DataProvider | undefined;
+
+  private activatedRoute = inject(ActivatedRoute);
+  private router = inject(Router);
 
   ngOnInit() {
     const id = this.activatedRoute.snapshot.paramMap.get('providerId');
 
     if (id === null) {
       const _ = this.router.navigateByUrl('providers');
-      return
+      return;
     }
 
-    this.providerId = id;
+    this.contentState.set('loading');
 
-    this.providerService
-      .fetchProvider(this.providerId)
-      .subscribe({
-        next: provider => this.provider = provider,
-        error: err => {
-          console.log(err)
-          const _ = this.router.navigateByUrl('providers');
-        }
-      });
-
-    this.playlistsService
-      .getPlaylists()
-      .subscribe({
-        next: playlists => this.playlists = playlists,
-        error: err => console.log(err)
-      });
+    combineLatest([
+      this.providerService.fetchProvider(id, true),
+      this.playlistsService.getPlaylists(false),
+    ]).subscribe({
+      next: ([provider, playlists]) => {
+        this.provider = provider;
+        this.playlists = playlists;
+        this.contentState.set('initialized');
+      },
+      error: (err) => {
+        console.log(err);
+        const _ = this.router.navigateByUrl('providers');
+        this.contentState.set('error');
+      },
+    });
   }
 
-  public getDataSource() {
-    if (this.isDataSourceInitialized) {
-      return this.dataSource;
-    }
-
-    this.dataSource.data = this.providerService.getProviderTree(
-      this.providerId!
-    )!;
-    this.isDataSourceInitialized = true;
-    return this.dataSource;
-  }
-
-  hasChild = (_: number, node: FlatNode) => node.expandable;
-
-  addSongToPlaylist(file: Song, playlistId: string) {
-    this.playlistsService
-      .addSongToPlaylist(playlistId, file.id)
-      .subscribe({
-        next: _ => console.log('Added to the playlist'),
-        error: err => console.log(err)
-      });
-  }
-
-  addSongToQueue(file: Song) {
-    this.queueService.addToQueue([file]);
-  }
-
-  async playSong(song: Song) {
-    await this.playerService.playSongs([song]);
-  }
-
-  public readonly treeControl = new FlatTreeControl<FlatNode>(
-    (node) => node.level,
-    (node) => node.expandable
-  );
-
-  public readonly treeFlattener = new MatTreeFlattener(
-    transformer,
-    (node) => node.level,
-    (node) => node.expandable,
-    (node) => {
-      if (node) {
-        return node.children;
+  protected playAll() {
+    const sorted = this.provider?.musicFiles.sort((a, b) => {
+      if (a.path < b.path) {
+        return -1;
       }
+      if (a.path > b.path) {
+        return 1;
+      }
+      return 0;
+    });
+    this.playerService.setSongs(sorted!);
+  }
 
-      return [];
-    }
-  );
+  protected update() {
+    this.isUpdating.set(true);
 
-  private dataSource = new MatTreeFlatDataSource(
-    this.treeControl,
-    this.treeFlattener
-  );
+    this.providerService.updateProvider(this.provider!.id, true).subscribe({
+      next: (provider) => {
+        this.provider = provider;
+      },
+      error: (err) => {
+        console.log(err);
+      },
+      complete: () => this.isUpdating.set(false),
+    });
+  }
+
+  protected remove() {
+    this.isRemoving.set(true);
+
+    this.providerService.removeProvider().subscribe({
+      next: () => {
+        this.router.navigate(['..']);
+      },
+      error: (err) => {
+        console.log(err);
+      },
+      complete: () => this.isRemoving.set(false),
+    });
+  }
 }

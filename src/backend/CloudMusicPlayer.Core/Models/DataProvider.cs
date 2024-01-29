@@ -32,10 +32,12 @@ public record DataProvider : BaseEntity
     public string Name { get; init; } = string.Empty;
     public DateTimeOffset AddedAt { get; init; }
     public DateTimeOffset UpdatedAt { get; set; }
+
+    // TODO Move access and refresh tokens with expirations to a separate entity
     public byte[] AccessToken { get; set; } = null!;
     public DateTimeOffset AccessTokenExpiration { get; set; }
     public byte[] RefreshToken { get; set; } = null!;
-    public IReadOnlyList<SongFile> SongFiles { get; init; } = null!;
+    public IReadOnlyList<MusicFile>? MusicFiles { get; init; } = null!;
 
     public void UpdateAccessToken(byte[] accessToken, DateTimeOffset expirationDate)
     {

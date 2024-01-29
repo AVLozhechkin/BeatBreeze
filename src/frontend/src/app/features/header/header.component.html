@@ -3,7 +3,8 @@
   @if (this.authService.user()) {
   <button mat-flat-button class="m-3" routerLink="providers">Library</button>
   <button mat-flat-button class="m-3" routerLink="playlists">Playlists</button>
-  <button mat-flat-button class="m-3" routerLink="queue">Queue</button>
+  <button mat-flat-button class="m-3" routerLink="queue"
+    [disabled]="this.playerService.currentPlaylist().length <= 1">Queue</button>
   <button mat-flat-button class="m-3" color="primary" (click)="signOut()">Sign out</button>
   } @else {
   <div>

@@ -1,44 +1,56 @@
-import {Injectable} from "@angular/core";
-import {Observable} from "rxjs";
-import {DataProvider} from "../../models/data-provider.model";
-import {ProviderTypes} from "../../models/provider-types.model";
-import {HttpClient} from "@angular/common/http";
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { DataProvider } from '../../models/data-provider.model';
+import { ProviderTypes } from '../../models/provider-types.model';
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
-export class ProvidersApiClient  {
-  private providersUrl = "http://localhost:5229/api/providers";
+export class ProvidersApiClient {
+  private providersUrl = `${environment.apiUrl}/providers`;
 
   constructor(private http: HttpClient) {}
 
-  getProviders(): Observable<DataProvider[]> {
-    return this.http.get<DataProvider[]>(this.providersUrl)
+  getProviders(includeFiles: boolean): Observable<DataProvider[]> {
+    const url = `${this.providersUrl}?includeFiles=${includeFiles}`;
+    return this.http.get<DataProvider[]>(url);
   }
 
-  getProvider(providerId: string): Observable<DataProvider> {
-    return this.http.get<DataProvider>(this.providersUrl + "/" + providerId);
+  getProvider(
+    providerId: string,
+    includeFiles: boolean
+  ): Observable<DataProvider> {
+    const url = `${this.providersUrl}/${providerId}?includeFiles=${includeFiles}`;
+
+    return this.http.get<DataProvider>(url);
   }
 
+  updateProvider(
+    providerId: string,
+    includeFiles: boolean
+  ): Observable<DataProvider> {
+    const url = `${this.providersUrl}/${providerId}?includeFiles=${includeFiles}`;
 
-  updateProvider(providerId: string): Observable<DataProvider> {
-    const url = this.providersUrl + "/" + providerId
-    return this.http.post<DataProvider>(url, null)
+    return this.http.patch<DataProvider>(url, null);
   }
 
   removeProvider(providerId: string): Observable<void> {
-    const url = this.providersUrl + '/' + providerId
-    return this.http.delete<void>(url)
+    const url = `${this.providersUrl}/${providerId}`;
+    return this.http.delete<void>(url);
   }
 
-  getSongUrl(songFileId: string) {
-    const url = this.providersUrl + '/songUrl/' + songFileId;
-    // TODO Make shareReplay caching based on expiresIn
-    return this.http.get(url, { responseType: "text"});
+  getSongUrl(songFileId: string, notCached: boolean = false) {
+    const url = `${this.providersUrl}/songUrl/${songFileId}?notCached=${notCached}`;
+
+    return this.http.get(url, { responseType: 'text' });
   }
 
-  addProvider(providerType: ProviderTypes)
-  {
-    return window.open(this.providersUrl + '/add-provider/' + providerType, '_self')
+  addProvider(providerType: ProviderTypes) {
+    return window.open(
+      `${this.providersUrl}/add-provider/${providerType}`,
+      '_self'
+    );
   }
 }

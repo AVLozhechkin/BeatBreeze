@@ -4,7 +4,7 @@ using CloudMusicPlayer.Core.Models;
 
 namespace CloudMusicPlayer.Infrastructure.Services.Yandex;
 
-internal record YandexFile
+internal sealed record YandexFile
 {
     [JsonPropertyName("size")]
     public uint Size { get; set; }
@@ -14,15 +14,17 @@ internal record YandexFile
 
     [JsonPropertyName("path")]
     public required string Path { get; set; }
+
     [JsonPropertyName("md5")]
     public required string Md5 { get; set; }
+
     [JsonPropertyName("resource_id")]
     public required string ResourceId { get; set; }
 
 
-    public SongFile MapToSongFile()
+    public MusicFile MapToMusicFile()
     {
-        return new SongFile
+        return new MusicFile
         {
             Name = Name,
             Path = Path,
@@ -35,12 +37,12 @@ internal record YandexFile
 
     private AudioTypes GetAudioType()
     {
-        if (Path.EndsWith("flac"))
+        if (Path.EndsWith("flac", StringComparison.InvariantCultureIgnoreCase))
         {
             return AudioTypes.Flac;
         }
 
-        if (Path.EndsWith("mp3"))
+        if (Path.EndsWith("mp3", StringComparison.InvariantCultureIgnoreCase))
         {
             return AudioTypes.Mp3;
         }

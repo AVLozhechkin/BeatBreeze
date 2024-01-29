@@ -1,8 +1,8 @@
-import {FlatNode, TreeNode} from './tree-node';
-import { Song } from '../../core/models/song.model';
+import { FlatNode, TreeNode } from './tree-node';
+import { MusicFile } from '../../core/models/musicFile.model';
 
-export function convertToTreeNode(songs: Song[]): TreeNode<Song>[] {
-  const root: TreeNode<Song> = {
+export function convertToTreeNode(songs: MusicFile[]): TreeNode<MusicFile>[] {
+  const root: TreeNode<MusicFile> = {
     label: 'root',
     file: undefined,
     size: 0,
@@ -12,7 +12,7 @@ export function convertToTreeNode(songs: Song[]): TreeNode<Song>[] {
   songs.forEach((song) => {
     const segments = song.path.split('/');
 
-    let currentNode: TreeNode<Song> = root;
+    let currentNode: TreeNode<MusicFile> = root;
 
     for (let i = 1; i < segments.length; i++) {
       let existingNode = currentNode.children?.find(
@@ -20,14 +20,14 @@ export function convertToTreeNode(songs: Song[]): TreeNode<Song>[] {
       );
 
       if (existingNode === undefined) {
-        let newNode: TreeNode<Song> = {
+        let newNode: TreeNode<MusicFile> = {
           label: segments[i],
           file: song,
           size: 0,
           children: [],
         };
 
-        sortedInsert(currentNode.children, newNode)
+        sortedInsert(currentNode.children, newNode);
 
         currentNode = newNode;
       } else {
@@ -43,8 +43,10 @@ export function convertToTreeNode(songs: Song[]): TreeNode<Song>[] {
   return root.children;
 }
 
-
-export function transformer(node: TreeNode<Song> | undefined, level: number): FlatNode  {
+export function transformer(
+  node: TreeNode<MusicFile> | undefined,
+  level: number
+): FlatNode {
   if (!node) {
     return {
       expandable: false,
@@ -61,7 +63,10 @@ export function transformer(node: TreeNode<Song> | undefined, level: number): Fl
   };
 }
 
-function sortedInsert(children: TreeNode<Song>[], item: TreeNode<Song>) {
+function sortedInsert(
+  children: TreeNode<MusicFile>[],
+  item: TreeNode<MusicFile>
+) {
   let low = 0,
     high = children.length;
 
@@ -71,5 +76,5 @@ function sortedInsert(children: TreeNode<Song>[], item: TreeNode<Song>) {
     else high = mid;
   }
 
-  children.splice(low, 0, item)
+  children.splice(low, 0, item);
 }

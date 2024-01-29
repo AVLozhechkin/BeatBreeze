@@ -1,4 +1,5 @@
-﻿using CloudMusicPlayer.Core.Interfaces;
+﻿using CloudMusicPlayer.Core.Exceptions;
+using CloudMusicPlayer.Core.Interfaces;
 using CloudMusicPlayer.Core.Interfaces.Repositories;
 using CloudMusicPlayer.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -21,7 +22,7 @@ internal sealed class UserService : IUserService
         var user = new User(email, passwordHash);
 
         await _userRepository.AddAsync(user, true);
-        _logger.LogInformation("User ({userId}) was created", user.Id);
+        _logger.LogInformation("User ({UserId}) was created", user.Id);
 
         return user;
 

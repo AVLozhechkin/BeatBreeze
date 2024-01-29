@@ -1,0 +1,32 @@
+# Setup
+
+@host = localhost:5229/api/auth
+
+# Auth controller
+
+# Login as a user
+POST http://{{host}}/login
+Content-Type: application/json
+
+{
+    "email": "test@test.com",
+    "password": "Password123!"
+}
+
+###
+
+# Create user
+POST http://{{host}}/create
+Content-Type: application/json
+
+{
+    "email": "test@test.com",
+    "password": "Password123!",
+    "passwordConfirmation": "Password123!"
+}
+
+###
+
+# Log out
+
+###

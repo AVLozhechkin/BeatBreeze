@@ -1,38 +1,33 @@
-@if (providerService.isLoading()) {
+@switch (contentState()) {
+@case ("loading") {
 <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-} @else {
-<div class="container mx-auto flex justify-center pt-10">
-  <mat-tree [dataSource]="getDataSource()" [treeControl]="treeControl" class="w-full">
+}
+@case ("initialized") {
+<div class="container mx-auto flex flex-col justify-center pt-10">
+  <div class="flex justify-between w-full p-2">
+    <div class="flex gap-x-2 items-center">
+      <span class="text-xl">{{ this.provider!.name }}</span>
+      <mat-chip>
+        {{this.provider!.providerType}}
+      </mat-chip>
+    </div>
+    <div class="flex gap-x-2">
+      <button mat-flat-button (click)="playAll()">Play all songs</button>
+      <cmp-active-button color="accent" text="Update" [isLoading]="isUpdating()"
+        [disabled]="isRemoving() || isUpdating()" (click)="update()"></cmp-active-button>
+      <cmp-active-button color="warn" text="Remove" [isLoading]="isRemoving()" [disabled]="isRemoving() || isUpdating()"
+        (click)="remove()"></cmp-active-button>
+    </div>
+  </div>
 
-    <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
-      <div class="flex justify-between w-full">
-        <div class="flex items-center gap-x-2">
-          <button mat-icon-button color="primary" (click)="playSong(node.file)">
-            <mat-icon>play_circle</mat-icon>
-          </button>
-          {{node.name}}
-        </div>
-        <div class="flex items-center gap-x-2 pr-2">
-          <button mat-flat-button class="z-0" color="primary" [matMenuTriggerFor]="menu">Add to playlist</button>
-          <mat-menu #menu="matMenu" xPosition="before">
-            @for (playlist of this.playlists; track $index) {
-            <button mat-menu-item (click)="addSongToPlaylist(node.file, playlist.id)">Add to {{playlist.name}}</button>
-            }
-          </mat-menu>
-          <button mat-flat-button class="z-0" color="accent" (click)="addSongToQueue(node.file)">Add to queue</button>
-        </div>
-      </div>
-    </mat-tree-node>
-
-    <mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding>
-      <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' + node.name">
-        <mat-icon class="mat-icon-rtl-mirror">
-          {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
-        </mat-icon>
-      </button>
-      {{node.name}}
-    </mat-tree-node>
-
-  </mat-tree>
+  <cmp-provider-tree [provider]="this.provider!" [playlists]="this.playlists!"></cmp-provider-tree>
 </div>
+}
+@default {
+<div class="container mx-auto flex justify-center flex-col pt-10">
+  <div class="flex justify-center w-full p-2">
+    Something went wrong. Please, try again later
+  </div>
+</div>
+}
 }

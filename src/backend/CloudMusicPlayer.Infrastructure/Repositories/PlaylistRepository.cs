@@ -2,6 +2,7 @@
 using CloudMusicPlayer.Core.Interfaces.Repositories;
 using CloudMusicPlayer.Core.Models;
 using CloudMusicPlayer.Infrastructure.Database;
+using CloudMusicPlayer.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace CloudMusicPlayer.Infrastructure.Repositories;
@@ -9,20 +10,22 @@ namespace CloudMusicPlayer.Infrastructure.Repositories;
 internal sealed class PlaylistRepository : IPlaylistRepository
 {
     private readonly ApplicationContext _applicationContext;
+    private readonly IExceptionParser _exceptionParser;
 
-    public PlaylistRepository(ApplicationContext applicationContext)
+    public PlaylistRepository(ApplicationContext applicationContext, IExceptionParser exceptionParser)
     {
         _applicationContext = applicationContext;
+        _exceptionParser = exceptionParser;
     }
 
-    public async Task<Playlist?> GetByIdAsync(Guid playlistId, bool includeSongFiles, bool asNoTracking = true)
+    public async Task<Playlist?> GetByIdAsync(Guid playlistId, bool includeItems, bool asNoTracking)
     {
         var query = _applicationContext.Playlists.AsQueryable();
 
-        if (includeSongFiles)
+        if (includeItems)
         {
             query = query.Include(pl => pl.PlaylistItems)
-                .ThenInclude(pi => pi.SongFile);
+                .ThenInclude(pi => pi.MusicFile);
         }
 
         if (asNoTracking)
@@ -33,15 +36,15 @@ internal sealed class PlaylistRepository : IPlaylistRepository
         return await query.FirstOrDefaultAsync(pl => pl.Id == playlistId);
     }
 
-    public async Task<List<Playlist>> GetAllByUserIdAsync(Guid userId, bool includeSongFiles, bool asNoTracking = true)
+    public async Task<List<Playlist>> GetAllByUserIdAsync(Guid userId, bool includeItems, bool asNoTracking)
     {
         var query = _applicationContext.Playlists.AsQueryable();
 
-        if (includeSongFiles)
+        if (includeItems)
         {
             query = query
                 .Include(pl => pl.PlaylistItems)
-                .ThenInclude(pi => pi.SongFile);
+                .ThenInclude(pi => pi.MusicFile);
         }
 
         if (asNoTracking)
@@ -52,17 +55,25 @@ internal sealed class PlaylistRepository : IPlaylistRepository
         return await query.Where(pl => pl.UserId == userId).ToListAsync();
     }
 
-    public async Task AddAsync(Playlist playlist, bool saveChanges = false)
+    public async Task AddAsync(Playlist playlist, bool saveChanges)
     {
         await _applicationContext.Playlists.AddAsync(playlist);
 
         if (saveChanges)
         {
-            await _applicationContext.SaveChangesAsync();
+            try
+            {
+                await _applicationContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (_exceptionParser.IsAlreadyExists(ex))
+            {
+                Console.WriteLine(ex.Message);
+                throw AlreadyExistException.Create<Playlist>();
+            }
         }
     }
 
-    public async Task UpdateAsync(Playlist playlist, bool saveChanges = false)
+    public async Task UpdateAsync(Playlist playlist, bool saveChanges)
     {
         if (saveChanges)
         {
@@ -85,14 +96,13 @@ internal sealed class PlaylistRepository : IPlaylistRepository
         _applicationContext.Playlists.Update(playlist);
     }
 
-    public async Task RemoveAsync(Guid playlistId, Guid ownerId, bool saveChanges = false)
+    public async Task RemoveAsync(Guid playlistId, Guid ownerId, bool saveChanges)
     {
         if (saveChanges)
         {
             var result = await _applicationContext
                 .Playlists
                 .Where(p => p.Id == playlistId && p.UserId == ownerId)
-                .Take(1)
                 .ExecuteDeleteAsync();
 
             if (result == 0)

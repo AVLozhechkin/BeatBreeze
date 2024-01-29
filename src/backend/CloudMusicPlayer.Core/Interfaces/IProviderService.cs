@@ -5,9 +5,10 @@ namespace CloudMusicPlayer.Core.Interfaces;
 
 public interface IProviderService
 {
-    Task<List<DataProvider>> GetAllProvidersByUserId(Guid userId);
-    Task<DataProvider> GetDataProvider(Guid providerId, Guid userId);
-    Task<string> GetSongFileUrl(Guid songFileId, Guid userId);
+    Task<List<DataProvider>> GetProvidersByUserId(Guid userId, bool includeFiles);
+    Task<DataProvider> GetDataProviderById(Guid providerId, Guid userId, bool includeFiles);
+    Task<IEnumerable<MusicFile>> GetSongsForDataProvider(Guid providerId, Guid userId);
+    Task<string> GetMusicFileUrl(Guid musicFileId, Guid userId);
 
     Task AddDataProvider(
         ProviderTypes providerType,

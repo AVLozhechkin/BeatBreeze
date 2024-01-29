@@ -6,7 +6,7 @@ namespace CloudMusicPlayer.Core.Interfaces;
 public interface IExternalProviderService
 {
     public bool CanBeExecuted(ProviderTypes providerType);
-    public Task<IReadOnlyList<SongFile>> GetSongFiles(DataProvider provider);
-    public Task<string> GetSongFileUrl(SongFile songFile, DataProvider provider);
-    public Task<AccessToken> GetAccessToken(byte[] refreshToken);
+    public Task<IReadOnlyList<MusicFile>> GetMusicFiles(DataProvider provider);
+    public Task<string> GetMusicFileUrl(MusicFile musicFile, DataProvider provider);
+    public Task<AccessToken> GetAccessToken(DataProvider provider);
 }

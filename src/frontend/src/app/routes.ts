@@ -1,35 +1,24 @@
-import {Routes} from "@angular/router";
-import {SignUpComponent} from "./features/signup/sign-up.component";
-import {LoginComponent} from "./features/login/login.component";
-import {WelcomeComponent} from "./features/welcome/welcome.component";
-import {HomeComponent} from "./features/home/home.component";
-import {ProvidersComponent} from "./features/providers/providers.component";
-import {ProviderComponent} from "./features/provider/provider.component";
-import {PlaylistsComponent} from "./features/playlists/playlists.component";
-import {PlaylistComponent} from "./features/playlist/playlist.component";
-import {SongQueueComponent} from "./features/song-queue/song-queue.component";
-
+import { Routes } from '@angular/router';
 
 export const DEFAULT_ROUTES: Routes = [
   {
-    path: '',
-    component: WelcomeComponent,
-  },
-  {
-    path: 'home',
-    component: HomeComponent,
-  },
-  {
     path: 'login',
-    component: LoginComponent
+    loadComponent: () =>
+      import('./features/login/login.component').then((c) => c.LoginComponent),
   },
   {
     path: 'signup',
-    component: SignUpComponent
+    loadComponent: () =>
+      import('./features/signup/sign-up.component').then(
+        (c) => c.SignUpComponent
+      ),
   },
   {
     path: 'queue',
-    component: SongQueueComponent
+    loadComponent: () =>
+      import('./features/song-queue/song-queue.component').then(
+        (c) => c.SongQueueComponent
+      ),
   },
   {
     path: 'providers',
@@ -40,14 +29,38 @@ export const DEFAULT_ROUTES: Routes = [
     path: 'playlists',
     loadChildren: () => PLAYLIST_ROUTES,
     title: 'Playlists',
-  }
-]
+  },
+];
 export const PROVIDER_ROUTES: Routes = [
-  { path: '', component: ProvidersComponent },
-  { path: ':providerId', component: ProviderComponent }
-]
+  {
+    path: '',
+    loadComponent: () =>
+      import('./features/providers/providers.component').then(
+        (c) => c.ProvidersComponent
+      ),
+  },
+  {
+    path: ':providerId',
+    loadComponent: () =>
+      import('./features/provider/provider.component').then(
+        (c) => c.ProviderComponent
+      ),
+  },
+];
 
 export const PLAYLIST_ROUTES: Routes = [
-  { path: '', component: PlaylistsComponent },
-  { path: ':playlistId', component: PlaylistComponent }
-]
+  {
+    path: '',
+    loadComponent: () =>
+      import('./features/playlists/playlists.component').then(
+        (c) => c.PlaylistsComponent
+      ),
+  },
+  {
+    path: ':playlistId',
+    loadComponent: () =>
+      import('./features/playlist/playlist.component').then(
+        (c) => c.PlaylistComponent
+      ),
+  },
+];

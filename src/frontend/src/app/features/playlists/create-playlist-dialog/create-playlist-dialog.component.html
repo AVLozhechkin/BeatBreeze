@@ -1,0 +1,25 @@
+<h1 mat-dialog-title>Create playlist</h1>
+
+<mat-dialog-content>
+  <div class="flex flex-col">
+    @if (this.responseStatus === 'badRequest') {
+    <div class="w-full p-2 my-3 text-slate-50 bg-red-500 rounded">
+      Playlist with name "{{this.playlistNameControl.value}}" already exists
+    </div>
+    }
+    <mat-form-field>
+      <mat-label>Playlist name</mat-label>
+      <input matInput [formControl]="this.playlistNameControl" placeholder="Ex. Rock songs">
+      @if (this.playlistNameControl.errors) {
+      <mat-error>
+        Name must contain at least 1 character
+      </mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <mat-dialog-actions align="end">
+    <cmp-active-button color="primary" text="Create" (click)="create()" [isLoading]="this.isCreating"
+      [disabled]="this.isCreating"></cmp-active-button>
+  </mat-dialog-actions>
+</mat-dialog-content>

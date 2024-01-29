@@ -19,7 +19,7 @@ public sealed class UsersController : BaseController
     [HttpGet]
     public async Task<ActionResult<UserDto>> GetCurrentUser()
     {
-        var userId = this.User.GetUserGuid();
+        var userId = User.GetUserGuid();
 
         var user = await _userService.GetUserById(userId);
 

@@ -2,7 +2,7 @@
 
 namespace CloudMusicPlayer.Infrastructure.Services.Dropbox.Results;
 
-internal record ListFolderResult
+internal sealed record ListFolderResult
 {
     [JsonPropertyName("entries")]
     public required IList<Metadata> Entries { get; set; }

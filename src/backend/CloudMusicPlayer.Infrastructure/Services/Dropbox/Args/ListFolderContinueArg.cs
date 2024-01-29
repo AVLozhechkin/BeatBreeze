@@ -2,7 +2,7 @@
 
 namespace CloudMusicPlayer.Infrastructure.Services.Dropbox.Args;
 
-internal record ListFolderContinueArg
+internal sealed record ListFolderContinueArg
 {
     [JsonPropertyName("cursor")]
     public required string Cursor { get; init; }

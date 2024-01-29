@@ -2,6 +2,5 @@
 
 public record PlaylistItemRequest
 {
-    public required Guid PlaylistId { get; set; }
-    public required Guid SongFileId { get; set; }
+    public required Guid MusicFileId { get; set; }
 }

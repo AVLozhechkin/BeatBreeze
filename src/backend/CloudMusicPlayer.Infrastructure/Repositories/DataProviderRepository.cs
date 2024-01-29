@@ -16,13 +16,13 @@ internal sealed class DataProviderRepository : IDataProviderRepository
         _applicationContext = applicationContext;
     }
 
-    public async Task<DataProvider?> GetByIdAsync(Guid dataProviderId, bool includeSongFiles = false, bool asNoTracking = true)
+    public async Task<DataProvider?> GetByIdAsync(Guid providerId, bool includeMusicFiles, bool asNoTracking)
     {
         var query = _applicationContext.DataProviders.AsQueryable();
 
-        if (includeSongFiles)
+        if (includeMusicFiles)
         {
-            query = query.Include((dp) => dp.SongFiles);
+            query = query.Include((dp) => dp.MusicFiles);
         }
 
         if (asNoTracking)
@@ -30,7 +30,7 @@ internal sealed class DataProviderRepository : IDataProviderRepository
             query = query.AsNoTracking();
         }
 
-        return await query.FirstOrDefaultAsync(dp => dp.Id == dataProviderId);
+        return await query.FirstOrDefaultAsync(dp => dp.Id == providerId);
     }
 
     public async Task<DataProvider?> GetByTypeAndName(ProviderTypes providerType, string name, Guid userId, bool asNoTracking)
@@ -47,13 +47,13 @@ internal sealed class DataProviderRepository : IDataProviderRepository
                                                      && dp.UserId == userId);
     }
 
-    public async Task<List<DataProvider>> GetAllByUserIdAsync(Guid userId, bool includeSongFiles = false, bool asNoTracking = true)
+    public async Task<List<DataProvider>> GetByUserIdAsync(Guid userId, bool includeMusicFiles, bool asNoTracking)
     {
         var query = _applicationContext.DataProviders.AsQueryable();
 
-        if (includeSongFiles)
+        if (includeMusicFiles)
         {
-            query = query.Include((dp) => dp.SongFiles);
+            query = query.Include((dp) => dp.MusicFiles);
         }
 
         if (asNoTracking)
@@ -64,7 +64,7 @@ internal sealed class DataProviderRepository : IDataProviderRepository
         return await query.Where(dp => dp.UserId == userId).ToListAsync();
     }
 
-    public async Task AddAsync(DataProvider dataProvider, bool saveChanges = false)
+    public async Task AddAsync(DataProvider dataProvider, bool saveChanges)
     {
         await _applicationContext.DataProviders.AddAsync(dataProvider);
 
@@ -74,14 +74,13 @@ internal sealed class DataProviderRepository : IDataProviderRepository
         }
     }
 
-    public async Task UpdateAsync(DataProvider dataProvider, bool saveChanges = false)
+    public async Task UpdateAsync(DataProvider dataProvider, bool saveChanges)
     {
         if (saveChanges)
         {
             var result = await _applicationContext
                 .DataProviders
                 .Where(dp => dp.Id == dataProvider.Id)
-                .Take(1)
                 .ExecuteUpdateAsync(setters =>
                     setters
                     .SetProperty(dp => dp.AccessToken, dataProvider.AccessToken)

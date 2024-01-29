@@ -1,61 +1,55 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { PlaylistsApiClient } from './api/playlists-api-client';
-import {tap} from "rxjs";
+import { BehaviorSubject, tap } from 'rxjs';
+import { Playlist } from '../models/playlist.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PlaylistsService {
-  playlistsApiClient = inject(PlaylistsApiClient);
+  private playlistsApiClient = inject(PlaylistsApiClient);
 
-  private readonly _isLoading = signal<boolean>(false);
-  public readonly isLoading = this._isLoading.asReadonly();
+  private _playlists = new BehaviorSubject<Playlist[]>([]);
 
-  public getPlaylists() {
-    this._isLoading.set(true);
+  public playlists = this._playlists.asObservable();
 
+  public getPlaylists(includeItems: boolean) {
     return this.playlistsApiClient
-      .getUserPlaylists()
-      .pipe(
-        tap(_ => this._isLoading.set(false))
-      );
+      .getUserPlaylists(includeItems)
+      .pipe(tap((playlists) => this._playlists.next(playlists)));
   }
 
-  public getPlaylist(playlistId: string) {
-    this._isLoading.set(true);
-
-    return this.playlistsApiClient
-      .getPlaylist(playlistId)
-      .pipe(
-        tap(_ => this._isLoading.set(false))
-      );
+  public getPlaylist(playlistId: string, includeItems: boolean) {
+    return this.playlistsApiClient.getPlaylist(playlistId, includeItems);
   }
 
   public createPlaylist(playlistName: string) {
-    this._isLoading.set(true);
+    return this.playlistsApiClient.createPlaylist(playlistName).pipe(
+      tap((playlist) => {
+        const playlists = this._playlists.getValue();
+        playlists?.push(playlist);
+        this._playlists.next(playlists);
+      })
+    );
+  }
 
-    return this.playlistsApiClient
-      .createPlaylist(playlistName)
-      .pipe(
-        tap(_ => this._isLoading.set(false))
-      )
+  public deletePlaylist(playlistId: string) {
+    return this.playlistsApiClient.deletePlaylist(playlistId).pipe(
+      tap((_) => {
+        const playlists = this._playlists.getValue();
+
+        const updatedPlaylists = playlists?.filter((p) => p.id !== playlistId);
+
+        this._playlists.next(updatedPlaylists);
+      })
+    );
   }
 
   public addSongToPlaylist(playlistId: string, songFileId: string) {
-    this._isLoading.set(true)
-    return this.playlistsApiClient
-      .addSong(playlistId, songFileId)
-      .pipe(
-        tap(_ => this._isLoading.set(false))
-      );
+    return this.playlistsApiClient.addSong(playlistId, songFileId);
   }
 
   public removeSongFromPlaylist(playlistId: string, songFileId: string) {
-    this._isLoading.set(true)
-    return this.playlistsApiClient
-      .removeSong(playlistId, songFileId)
-      .pipe(
-        tap(_ => this._isLoading.set(false))
-      )
+    return this.playlistsApiClient.removeSong(playlistId, songFileId);
   }
 }

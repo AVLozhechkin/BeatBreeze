@@ -1,0 +1,25 @@
+@if (this.playlist.size !== 0) {
+<div class="grid grid-cols-3">
+  <div class="flex justify-center">
+    <button mat-flat-button color="primary" class="z-0" [routerLink]="playlist.id">View</button>
+  </div>
+  <div class="flex justify-center">
+    <cmp-active-button color="accent" text="Play" [isLoading]="isEnquing()" [disabled]="isEnquing() || isDeleting()"
+      (click)="play()"></cmp-active-button>
+  </div>
+  <div class="flex justify-center">
+    <cmp-active-button color="warn" text="Delete" [isLoading]="isDeleting()" [disabled]="isEnquing() || isDeleting()"
+      (click)="deletePlaylist()"></cmp-active-button>
+  </div>
+</div>
+} @else {
+<div class="flex justify-between">
+  <div class="basis-1/3 flex justify-center">
+    <button mat-flat-button color="primary" class="z-0" [routerLink]="playlist.id">View</button>
+  </div>
+  <div class="basis-1/3 flex justify-center">
+    <cmp-active-button color="warn" text="Delete" [isLoading]="isDeleting()" [disabled]="isEnquing() || isDeleting()"
+      (click)="deletePlaylist()"></cmp-active-button>
+  </div>
+</div>
+}

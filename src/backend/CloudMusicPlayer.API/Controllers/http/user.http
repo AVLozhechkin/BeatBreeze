@@ -1,0 +1,19 @@
+# Setup
+
+@host = localhost:5229/api/users
+
+# User controller (requires auth)
+
+# Login as a user
+POST http://localhost:5229/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "test@test.com",
+    "password": "Password123!"
+}
+
+###
+
+# Get current user
+GET http://{{host}}

@@ -51,9 +51,8 @@ dotnet_diagnostic.CA1303.severity = silent
 dotnet_diagnostic.CA1822.severity = silent
 dotnet_diagnostic.CA2007.severity = silent
 dotnet_diagnostic.CA1305.severity = silent
-dotnet_diagnostic.CA1308.severity = none
-dotnet_diagnostic.IDE0007.severity = none
-dotnet_diagnostic.IDE0008.severity = none
+dotnet_style_prefer_collection_expression = true:suggestion
+dotnet_diagnostic.CA1819.severity = suggestion
 
 [project.json]
 indent_size = 2
@@ -224,8 +223,23 @@ dotnet_diagnostic.S2325.severity = silent
 dotnet_diagnostic.S125.severity = silent
 
 dotnet_diagnostic.CA1852.severity = warning
+csharp_style_prefer_primary_constructors = false:suggestion
 
 # C++ Files
+
+# CA1848: Use the LoggerMessage delegates
+dotnet_diagnostic.CA1848.severity = none
+
+# CA2234: Pass system uri objects instead of strings
+dotnet_diagnostic.CA2234.severity = none
+dotnet_diagnostic.CA1032.severity = silent
+dotnet_diagnostic.S3925.severity = silent
+dotnet_diagnostic.S1135.severity = suggestion
+dotnet_diagnostic.CA1812.severity = silent
+dotnet_diagnostic.ASP0001.severity = suggestion
+dotnet_diagnostic.ASP0014.severity = suggestion
+dotnet_diagnostic.S1075.severity = suggestion
+
 [*.{cpp,h,in}]
 curly_bracket_next_line = true
 indent_brace_style = Allman

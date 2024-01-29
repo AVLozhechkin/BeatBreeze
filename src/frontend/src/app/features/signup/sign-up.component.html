@@ -1,24 +1,66 @@
-<div class="container mx-auto flex justify-center pt-10">
-  <form [formGroup]="signUpFormGroup" class="w-1/2 flex justify-center flex-col gap-y-5">
+<div class="container mx-auto flex flex-col items-center justify-center pt-10">
+  <h1>Welcome to Cloud Music Player</h1>
+
+  <form [formGroup]="signUpFormGroup" class="w-1/2 flex justify-center flex-col">
+
+    @switch (responseStatus()) {
+    @case('badRequest') {
+    <div class="w-full p-2 my-3 bg-red-500 rounded">
+      User with this email is already registered.
+    </div>
+    }
+    @case('serverError') {
+    <div class="w-full p-2 my-3 bg-red-500 rounded">
+      Something went wrong on our side. Please, reload page or come back later.
+    </div>
+    }
+    }
+
     <!--Email-->
-    <mat-form-field>
+    <mat-form-field class="py-3">
       <mat-label>Email</mat-label>
-      <input type="email" matInput formControlName="email"
-             placeholder="Ex. pat@example.com">
+      <input type="email" matInput formControlName="email" placeholder="Ex. pat@example.com">
+      @if (signUpFormGroup.controls["email"].errors) {
+      <mat-error>
+        Please, provide a valid email
+      </mat-error>
+      }
     </mat-form-field>
     <!--Password-->
-    <mat-form-field>
+    <mat-form-field class="py-3">
       <mat-label>Password</mat-label>
-      <input type="password" matInput formControlName="password"
-             placeholder="Password">
+      <input type="password" matInput formControlName="password" placeholder="Password">
+      @if (signUpFormGroup.controls["password"].errors) {
+      <mat-error>
+        Password must contain at least one digit, one lowercase character, one uppercase character, one special
+        character, at least 8 characters in length, but no more than 32
+      </mat-error>
+      }
     </mat-form-field>
     <!--Password confirmation-->
-    <mat-form-field>
+    <mat-form-field class="py-3">
       <mat-label>Password confirmation</mat-label>
-      <input type="password" matInput formControlName="passwordConfirmation"
-             placeholder="Confirm your password">
+      <input type="password" matInput formControlName="passwordConfirmation" placeholder="Confirm your password">
+
+      @if (signUpFormGroup.controls["passwordConfirmation"].errors) {
+      <mat-error>
+        Passwords do not match
+      </mat-error>
+      }
     </mat-form-field>
     <!--Log in button-->
-    <button mat-flat-button color="primary" (click)="submit()">Sign Up</button>
+    <button mat-flat-button color="primary" (click)="submit()" [disabled]="responseStatus() === 'loading'">
+      @if (responseStatus() === 'loading') {
+      <div class="flex flex-row gap-x-5">
+        <span>Signing Up</span>
+        <mat-spinner color="accent" diameter="{{20}}"></mat-spinner>
+      </div>
+      } @else {
+      Sign Up
+      }
+    </button>
   </form>
+  <div class="mt-8 text-lg">
+    <a class="mt-8" routerLink="../login">Already have an account? <span class="text-purple-400">Log in</span></a>
+  </div>
 </div>

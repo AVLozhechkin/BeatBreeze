@@ -1,0 +1,71 @@
+# Setup
+
+@host = localhost:5229/api/playlists
+
+# Playlists controller (requires auth)
+
+# Login as a user
+POST http://localhost:5229/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "test@test.com",
+    "password": "Password123!"
+}
+
+###
+
+# Get all playlists without playlist items by user Id 
+GET http://{{host}}
+
+###
+
+# Get all playlists with playlist items by user Id 
+GET http://{{host}}?includeItems=true
+
+###
+
+# Get a playlist by user Id without playlist items
+GET http://{{host}}/5932773a-50b0-456c-a1b0-8e6bebbdbdf2
+
+###
+
+# Get a playlist by user Id with playlist items
+GET http://{{host}}/5932773a-50b0-456c-a1b0-8e6bebbdbdf2?includeItems=true
+
+###
+
+# Create new playlist
+POST http://{{host}}/
+Content-Type: application/json
+
+{
+    "name": "test playlist name 2"
+}
+
+###
+
+# Delete playlist by id
+DELETE http://{{host}}/cf4237b8-3165-4b4f-bf64-59b69bea04ea
+
+###
+
+# Add a songfile to playlist
+POST http://{{host}}/5932773a-50b0-456c-a1b0-8e6bebbdbdf2/add
+Content-Type: application/json
+
+{
+    "musicFileId": "19afe8b3-9ccc-417a-abe0-c43bcb2c572c"
+}
+
+###
+
+# Remove a songfile to playlist
+POST http://{{host}}/5932773a-50b0-456c-a1b0-8e6bebbdbdf2/remove
+Content-Type: application/json
+
+{
+    "musicFileId": "0eecb877-a858-436e-975a-75ac23423346"
+}
+
+###

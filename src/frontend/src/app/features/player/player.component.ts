@@ -2,29 +2,42 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { PlayerService, RepeatType } from '../../core/services/player.service';
 import { MatButtonModule } from '@angular/material/button';
-import { lastValueFrom } from 'rxjs';
-import { QueueService } from '../../core/services/queue.service';
+import {
+  PlayerService2,
+  RepeatType,
+} from 'src/app/core/services/player.service';
+import { FormatTimePipe } from 'src/app/shared/pipes/format-time.pipe';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   standalone: true,
   selector: 'cmp-player',
-  imports: [MatSliderModule, FormsModule, MatIconModule, MatButtonModule],
+  imports: [
+    MatSliderModule,
+    FormsModule,
+    MatIconModule,
+    MatButtonModule,
+    MatProgressBarModule,
+    FormatTimePipe,
+  ],
   templateUrl: './player.component.html',
   styles: ['.buttons-size { transform: scale(2)}'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PlayerComponent {
-  protected readonly playerService = inject(PlayerService);
-  protected readonly queueService = inject(QueueService);
+  protected readonly playerService = inject(PlayerService2);
   public currentVolume = 0.1;
 
   setSeek(event: MouseEvent) {
     const { width } = (
       event.currentTarget as HTMLElement
     ).getBoundingClientRect();
-    this.playerService.setSeek(width, event.clientX);
+
+    const percentage = event.clientX / width;
+    const seconds = this.playerService.duration() * percentage;
+
+    this.playerService.setSeek(seconds);
   }
 
   async playPrevious() {
@@ -47,23 +60,21 @@ export class PlayerComponent {
   }
 
   shuffle() {
-    this.queueService.shuffle();
+    this.playerService.shuffle();
   }
 
   unshuffle() {
-    this.queueService.unshuffle();
+    this.playerService.unshuffle();
   }
 
   unmute() {
-    this.playerService.unmute();
+    this.playerService.setMute(false);
   }
   mute() {
-    this.playerService.mute();
+    this.playerService.setMute(true);
   }
 
   updateVolume() {
     this.playerService.setVolume(this.currentVolume);
   }
-
-  protected readonly lastValueFrom = lastValueFrom;
 }

@@ -1,57 +1,65 @@
-import {Injectable} from "@angular/core";
-import {HttpClient} from "@angular/common/http";
-import {Observable} from "rxjs";
-import {Playlist} from "../../models/playlist.model";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { Playlist } from '../../models/playlist.model';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class PlaylistsApiClient {
-
-  private playlistsUrl = "http://localhost:5229/api/playlists";
+  private playlistsUrl = `${environment.apiUrl}/playlists`;
 
   constructor(private http: HttpClient) {}
 
-  getUserPlaylists(): Observable<Playlist[]> {
-    return this.http.get<Playlist[]>(this.playlistsUrl);
+  getUserPlaylists(includeItems: boolean): Observable<Playlist[]> {
+    const url = `${this.playlistsUrl}?includeItems=${includeItems}`;
+
+    return this.http.get<Playlist[]>(url);
   }
 
-  getPlaylist(playlistId: string): Observable<Playlist> {
-    return this.http.get<Playlist>(this.playlistsUrl + "/" + playlistId);
+  getPlaylist(playlistId: string, includeItems: boolean): Observable<Playlist> {
+    const url = `${this.playlistsUrl}/${playlistId}?includeItems=${includeItems}`;
+
+    return this.http.get<Playlist>(url);
   }
 
   createPlaylist(name: string): Observable<Playlist> {
     const body = {
-      name
-    }
+      name,
+    };
 
-    return this.http.post<Playlist>(this.playlistsUrl, body)
+    return this.http.post<Playlist>(this.playlistsUrl, body);
   }
 
   deletePlaylist(playlistId: string): Observable<Object> {
-    return this.http.delete<object>(this.playlistsUrl );
+    return this.http.delete<object>(this.playlistsUrl + '/' + playlistId);
   }
 
-  public addSong(playlistId: string, songFileId: string): Observable<Playlist>
-  {
-    const url = this.playlistsUrl + "/addSong"
+  public addSong(
+    playlistId: string,
+    musicFileId: string
+  ): Observable<Playlist> {
+    const url = `${this.playlistsUrl}/${playlistId}/add`;
 
     const body = {
-      playlistId,
-      songFileId
-    }
+      musicFileId,
+    };
 
     return this.http.post<Playlist>(url, body);
   }
 
-  public removeSong(playlistId: string, songFileId: string): Observable<Playlist>
-  {
-    const url = this.playlistsUrl + "/removeSong"
+  public removeSong(
+    playlistId: string,
+    musicFileId: string
+  ): Observable<Playlist> {
+    const url = `${this.playlistsUrl}/${playlistId}/remove`;
 
     const body = {
-      playlistId,
-      songFileId
-    }
+      musicFileId,
+    };
+
+    console.log(body);
 
     return this.http.post<Playlist>(url, body);
   }

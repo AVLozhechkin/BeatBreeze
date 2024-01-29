@@ -1,26 +1,31 @@
-﻿using CloudMusicPlayer.Core.Models;
+﻿using System.Text.Json.Serialization;
+using CloudMusicPlayer.Core.Models;
 
 namespace CloudMusicPlayer.API.Dtos.Models;
 
 public record PlaylistDto
 {
-    public required Guid Id { get; set; }
-    public required string Name { get; set; }
-    public required int Size { get; set; }
-    public required DateTimeOffset CreatedAt { get; set; }
-    public required DateTimeOffset UpdatedAt { get; set; }
-    public required IEnumerable<SongFileDto> SongFiles { get; set; }
+    public Guid Id { get; private set; }
+    public string Name { get; private set; } = null!;
+    public int Size { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset UpdatedAt { get; private set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<PlaylistItemDto>? PlaylistItems { get; set; } 
 
     public static PlaylistDto Create(Playlist playlist)
     {
+        ArgumentNullException.ThrowIfNull(playlist);
+
         return new PlaylistDto
         {
             Id = playlist.Id,
             Name = playlist.Name,
             CreatedAt = playlist.CreatedAt,
             UpdatedAt = playlist.UpdatedAt,
-            Size = playlist.PlaylistItems.Count,
-            SongFiles = playlist.PlaylistItems.Select(pi => SongFileDto.Create(pi.SongFile))
+            Size = playlist.Size,
+            PlaylistItems = playlist.PlaylistItems is null ? null : playlist.PlaylistItems.Select(PlaylistItemDto.Create)
         };
     }
 }

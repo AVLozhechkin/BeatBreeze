@@ -1,27 +1,29 @@
-<div class="fixed bottom-0 left-0 w-full text-white mat-app-background">
+<div class="fixed bottom-0 left-0 w-full text-white  mat-app-background">
   <!--Progress bar-->
+  @if(this.playerService.playState() === 'loading') {
+  <mat-progress-bar mode="indeterminate" class="h-2 px-1 pb-4"></mat-progress-bar>
+  } @else {
   <div class="w-full h-2 bg-gray-500 relative cursor-pointer" (click)="setSeek($event)">
-    <span class="block h-2 bg-white" [style]="{ width: this.playerService.songProgress() }"></span>
+    <span class="block h-2 bg-white" [style]="{ width: this.playerService.songProgress()}"></span>
   </div>
   <div class="flex justify-between w-full px-1 pt-2">
-    <span>{{this.playerService.seek()}}</span>
-    <span>{{this.playerService.songDuration()}}</span>
+    <span>{{this.playerService.currentTime() | formatTime }}</span>
+    <span>{{this.playerService.duration() | formatTime}}</span>
   </div>
+  }
 
   <div class="flex items-center p-3">
     <span class="w-1/4 text-lime-300">
-      @if (this.playerService.song()) {
+      @if (this.playerService.currentSong()) {
       {{
-      this.playerService.song()?.name
+      this.playerService.currentSong().name
       }}
-      } @else {
-      SongModel by artist
       }
     </span>
 
     <!--Buttons-->
     <div class="text-center w-1/2 flex justify-center items-center select-none gap-x-8">
-      @if (this.queueService.queue().length > 1) {
+      @if (this.playerService.currentPlaylist().length > 1) {
       <button mat-icon-button (click)="playPrevious()">
         <mat-icon class="buttons-size">skip_previous</mat-icon>
       </button>
@@ -35,7 +37,7 @@
         <mat-icon class="buttons-size">play_circle</mat-icon>
       </button>
       }
-      @if (this.queueService.queue().length > 1) {
+      @if (this.playerService.currentPlaylist().length > 1) {
       <button mat-icon-button (click)="this.playNext()">
         <mat-icon class="buttons-size">skip_next</mat-icon>
       </button>
@@ -44,7 +46,7 @@
 
     <div class="text-center w-1/4 flex justify-around items-center text-2xl space-x-2 select-none">
       @switch (playerService.repeatType()) {
-      @case ('repeat-1') {
+      @case ('repeat-one') {
       <button mat-icon-button (click)="setRepeat('repeat-none')">
         <mat-icon class="buttons-size">repeat_one</mat-icon>
       </button>
@@ -55,17 +57,17 @@
       </button>
       }
       @case ('repeat-all') {
-      <button mat-icon-button (click)="setRepeat('repeat-1')">
+      <button mat-icon-button (click)="setRepeat('repeat-one')">
         <mat-icon class="buttons-size">repeat</mat-icon>
       </button>
       }
       }
-      @if (queueService.isShuffled()) {
-      <button mat-icon-button (click)="unshuffle()" [disabled]="queueService.queue().length <= 1">
+      @if (this.playerService.isShuffled()) {
+      <button mat-icon-button (click)="unshuffle()" [disabled]="this.playerService.currentPlaylist().length <= 1">
         <mat-icon class="buttons-size">shuffle_on</mat-icon>
       </button>
       } @else {
-      <button mat-icon-button (click)="shuffle()" [disabled]="queueService.queue().length <= 1">
+      <button mat-icon-button (click)="shuffle()" [disabled]="this.playerService.currentPlaylist().length <= 1">
         <mat-icon class="buttons-size">shuffle</mat-icon>
       </button>
       }

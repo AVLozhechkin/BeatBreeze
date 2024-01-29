@@ -1,31 +1,31 @@
-@switch (contentState) {
-  @case ("loading") {
-    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-  }
-  @case ("initialized") {
-    <div class="container mx-auto flex justify-center flex-col pt-10">
-      <div class="flex justify-between w-full p-2">
-        <span class="text-xl">List of providers</span>
-        <div class="flex gap-x-2">
-          <button mat-flat-button (click)="addProvider('yandex')">Add Yandex Disk</button>
-          <button mat-flat-button (click)="addProvider('dropbox')">Add Dropbox</button>
-          <button mat-flat-button>Add GoogleDrive</button>
-        </div>
-      </div>
-      @if ((this.providersService.providers | async)?.length == 0) {
-        <div class="flex justify-between w-full p-2">
-          You have no providers added. Please, you can add Yandex Drive, Google Drive or Dropbox using buttons above.
-        </div>
-      } @else {
-        <cmp-providers-table></cmp-providers-table>
-      }
+@switch (contentState()) {
+@case ("loading") {
+<mat-progress-bar mode="indeterminate"></mat-progress-bar>
+}
+@case ("initialized") {
+<div class="container mx-auto flex justify-center flex-col pt-10">
+  <div class="flex justify-between w-full py-2">
+    <span class="text-xl">List of providers</span>
+    <div class="flex gap-x-2">
+      <button mat-flat-button (click)="addProvider('yandex')">Add Yandex Disk</button>
+      <button mat-flat-button (click)="addProvider('dropbox')">Add Dropbox</button>
+      <button mat-flat-button disabled="true">Add GoogleDrive</button>
     </div>
+  </div>
+  @if ((this.providersService.providers | async)?.length == 0) {
+  <div class="flex justify-between w-full p-2">
+    You have no providers added. Please, you can add Yandex Drive, Google Drive or Dropbox using buttons above.
+  </div>
+  } @else {
+  <cmp-providers-table></cmp-providers-table>
   }
-  @default {
-    <div class="container mx-auto flex justify-center flex-col pt-10">
-      <div class="flex justify-center w-full p-2">
-        Something went wrong. Please, try again later
-      </div>
-    </div>
-  }
+</div>
+}
+@default {
+<div class="container mx-auto flex justify-center flex-col pt-10">
+  <div class="flex justify-center w-full p-2">
+    Something went wrong. Please, try again later
+  </div>
+</div>
+}
 }

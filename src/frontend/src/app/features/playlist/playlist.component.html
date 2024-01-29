@@ -1,9 +1,18 @@
-@if (this.isLoading) {
+@switch(this.contentState()) {
+@case("loading") {
 <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-} @else {
+}
+@case ("initialized") {
 <div class="container mx-auto flex flex-col justify-center pt-10">
-  <button mat-flat-button (click)="this.playAll()">Play playlist</button>
-  <table mat-table [dataSource]="this.playlist!.songFiles!" class="mat-elevation-z8">
+  <div class="flex justify-between w-full p-2">
+    <span class="text-xl">{{(this.playlistService.playlist | async)!.name}}</span>
+    <div class="flex gap-x-2">
+      <button mat-flat-button color="accent" (click)="playAll()">Play all</button>
+      <button mat-flat-button color="warn">Delete playlist</button>
+    </div>
+  </div>
+
+  <table mat-table [dataSource]="(this.playlistService.playlist | async)!.playlistItems!" class="mat-elevation-z8">
 
     <!-- Position Column -->
     <ng-container matColumnDef="position">
@@ -14,16 +23,25 @@
     <!-- Name Column -->
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef> Name </th>
-      <td mat-cell *matCellDef="let playlistItem"> {{playlistItem.name}} </td>
+      <td mat-cell *matCellDef="let playlistItem">
+        <div class="flex items-center">
+          <button mat-icon-button color="primary" (click)="play(playlistItem)">
+            <mat-icon>play_circle</mat-icon>
+          </button> {{playlistItem.musicFile.name}}
+        </div>
+      </td>
     </ng-container>
 
     <!-- Buttons Column -->
     <ng-container matColumnDef="buttons">
-      <th mat-header-cell *matHeaderCellDef> Manage </th>
+      <th mat-header-cell *matHeaderCellDef>
+        <div class="flex justify-center">
+          Manage
+        </div>
+      </th>
       <td mat-cell *matCellDef="let playlistItem">
         <div class="flex justify-around">
-          <button mat-flat-button color="primary" (click)="play(playlistItem)">Play</button>
-          <button mat-flat-button color="warn" (click)="remove(playlistItem)">Remove</button>
+          <cmp-playlist-item-buttons [playlistItem]="playlistItem"></cmp-playlist-item-buttons>
         </div>
       </td>
     </ng-container>
@@ -32,4 +50,12 @@
     <tr mat-row *matRowDef="let _; columns: ['position', 'name', 'buttons'];"></tr>
   </table>
 </div>
+}
+@default {
+<div class="container mx-auto flex justify-center flex-col pt-10">
+  <div class="flex justify-center w-full p-2">
+    Something went wrong. Please, try again later
+  </div>
+</div>
+}
 }

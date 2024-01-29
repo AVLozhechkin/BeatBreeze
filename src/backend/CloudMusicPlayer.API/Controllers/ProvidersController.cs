@@ -2,11 +2,13 @@
 using CloudMusicPlayer.API.Dtos.Models;
 using CloudMusicPlayer.API.Utils;
 using CloudMusicPlayer.Core.Enums;
+using CloudMusicPlayer.Core.Exceptions;
 using CloudMusicPlayer.Core.Interfaces;
 using CloudMusicPlayer.Core.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace CloudMusicPlayer.API.Controllers;
 
@@ -14,95 +16,93 @@ namespace CloudMusicPlayer.API.Controllers;
 public sealed class ProvidersController : BaseController
 {
     private readonly IProviderService _providerService;
+    private readonly IDistributedCache _cache;
+    private readonly DistributedCacheEntryOptions cacheOptions = new DistributedCacheEntryOptions
+    {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+    };
 
-    public ProvidersController(IProviderService providerService)
+    public ProvidersController(IProviderService providerService, IDistributedCache cache)
     {
         _providerService = providerService;
+        _cache = cache;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<DataProviderDto>>> GetListOfDataProviders()
+    public async Task<IEnumerable<DataProviderDto>> GetDataProvidersByUserId(bool includeFiles = false)
     {
-        var userId = this.User.GetUserGuid();
+        var userId = User.GetUserGuid();
 
-        var providers = await _providerService.GetAllProvidersByUserId(userId);
+        var providers = await _providerService.GetProvidersByUserId(userId, includeFiles);
 
-        return Ok(providers.Select(DataProviderDto.Create));
+        return providers.Select(dp => DataProviderDto.Create(dp, includeFiles));
     }
 
     [HttpGet("{providerId:required}")]
-    public async Task<ActionResult<DataProviderDto>> GetDataProviderWithContent(Guid providerId)
+    public async Task<ActionResult<DataProviderDto>> GetById(Guid providerId, bool includeFiles = false)
     {
-        var userId = this.User.GetUserGuid();
+        var userId = User.GetUserGuid();
 
-        var provider = await _providerService.GetDataProvider( providerId, userId);
+        var provider = await _providerService.GetDataProviderById(providerId, userId, includeFiles);
 
         if (provider is null)
         {
-            return NotFound($"Data provider with ID: {providerId} was not found");
+            throw NotFoundException.Create<DataProvider>(providerId);
         }
 
-        return Ok(DataProviderDto.Create(provider));
+        return Ok(DataProviderDto.Create(provider, includeFiles));
     }
 
-    [HttpPost("{providerId:required}")]
-    public async Task<ActionResult<DataProvider>> UpdateDataProviderContent(Guid providerId)
+    [HttpPatch("{providerId:required}")]
+    public async Task<DataProviderDto> UpdateDataProviderContent(Guid providerId, bool includeFiles)
     {
-        var userId = this.User.GetUserGuid();
+        var userId = User.GetUserGuid();
 
-        var updatedProvider = await _providerService.UpdateDataProvider(providerId, userId);
+        var provider = await _providerService.UpdateDataProvider(providerId, userId);
 
-        return Ok(DataProviderDto.Create(updatedProvider));
+        return DataProviderDto.Create(provider, includeFiles);
     }
 
     [HttpDelete("{providerId:required}")]
-    public async Task<IActionResult> RemoveDataProvider(Guid providerId)
+    public async Task RemoveDataProvider(Guid providerId)
     {
-        var userId = this.User.GetUserGuid();
+        var userId = User.GetUserGuid();
 
         await _providerService.RemoveDataProvider(providerId, userId);
-
-        return Ok();
     }
 
     [HttpGet("add-provider/{providerType:required}")]
     public IActionResult AddYandex(ProviderTypes providerType)
     {
-        AuthenticationProperties? properties = null;
-
-        switch (providerType)
+        AuthenticationProperties? properties = new AuthenticationProperties
         {
-            case ProviderTypes.Dropbox:
-                properties = new AuthenticationProperties
-                {
-                    RedirectUri = Url.Action("DropboxCallback"),
-                    Items = { ["LoginProvider"] = "Dropbox" }
-                };
-                break;
-            case ProviderTypes.Yandex:
-                properties = new AuthenticationProperties
-                {
-                    RedirectUri = Url.Action("YandexCallback"),
-                    Items = { ["LoginProvider"] = "Yandex" }
-                };
-                break;
-        }
-
-        if (properties is null)
-        {
-            return BadRequest("Cant parse provider type");
-        }
+            RedirectUri = Url.Action("OAuthCallback", new { providerType }),
+            Items = { ["LoginProvider"] = providerType.ToString() }
+        };
 
         return Challenge(properties, properties.Items["LoginProvider"]!);
     }
 
-    [HttpGet("yandex-callback")]
-    public async Task<IActionResult> YandexCallback()
+    [HttpGet("callback/{providerType}")]
+    public async Task<IActionResult> OAuthCallback(ProviderTypes providerType)
     {
-        var authenticateResult = await HttpContext.AuthenticateAsync("Yandex");
+        var authSchema = providerType switch
+        {
+            ProviderTypes.Yandex => "Yandex",
+            ProviderTypes.Dropbox => "Dropbox",
+            ProviderTypes.Google => "Google",
+            _ => string.Empty
+        };
+
+        if (string.IsNullOrWhiteSpace(authSchema))
+        {
+            return Redirect("/providers?errors=unknown_schema");
+        }
+
+        var authenticateResult = await HttpContext.AuthenticateAsync(authSchema);
         if (!authenticateResult.Succeeded)
         {
-            return BadRequest(authenticateResult.Failure?.Message);
+            return Redirect("/providers?errors=oauth_failed");
         }
 
         var name = authenticateResult.Principal?.FindFirst(ClaimTypes.Name)?.Value!;
@@ -117,48 +117,40 @@ public sealed class ProvidersController : BaseController
         }
 
         await _providerService
-                .AddDataProvider(ProviderTypes.Yandex, userId, name, apiToken, refreshToken, expiresAt);
+                .AddDataProvider(providerType, userId, name, apiToken, refreshToken, expiresAt);
 
         HttpContext.Response.Cookies.Delete("CloudMusicPlayer_External");
 
         return Redirect("/providers");
     }
 
-    [HttpGet("dropbox-callback")]
-    public async Task<IActionResult> DropBoxCallback()
+    [HttpGet("songUrl/{musicFileId:required}")]
+    public async Task<ActionResult<string>> GetSongUrl(Guid musicFileId, bool notCached = false)
     {
-        var authenticateResult = await HttpContext.AuthenticateAsync("Dropbox");
-        if (!authenticateResult.Succeeded)
+        var userId = User.GetUserGuid();
+
+        var cacheKey = $"{musicFileId}_{userId}";
+
+        if (notCached)
         {
-            return BadRequest(authenticateResult.Failure?.Message);
+            var url = await _providerService.GetMusicFileUrl(musicFileId, userId);
+
+            await _cache.SetStringAsync(cacheKey, url, cacheOptions);
+
+            return Ok(url);
         }
 
-        var name = authenticateResult.Principal?.FindFirst(ClaimTypes.Name)?.Value!;
-        var apiToken = authenticateResult.Properties?.GetTokenValue("access_token")!;
-        var refreshToken = authenticateResult.Properties?.GetTokenValue("refresh_token")!;
-        var expiresAt = authenticateResult.Properties?.GetTokenValue("expires_at")!;
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var cachedUrl = await _cache.GetStringAsync(cacheKey);
 
-        if (!Guid.TryParse(userIdClaim, out var userId))
+        if (cachedUrl is null)
         {
-            return BadRequest("UserId must be a parseable GUID");
+            var url = await _providerService.GetMusicFileUrl(musicFileId, userId);
+
+            await _cache.SetStringAsync(cacheKey, url, cacheOptions);
+
+            return Ok(url);
         }
 
-        await _providerService
-                .AddDataProvider(ProviderTypes.Dropbox, userId, name, apiToken, refreshToken, expiresAt);
-
-        HttpContext.Response.Cookies.Delete("CloudMusicPlayer_External");
-
-        return Redirect("/providers");
-    }
-
-    [HttpGet("songUrl/{songFileId:required}")]
-    public async Task<ActionResult<string>> GetSongUrl(Guid songFileId)
-    {
-        var userId = this.User.GetUserGuid();
-
-        var url = await _providerService.GetSongFileUrl(songFileId, userId);
-
-        return Ok(url);
+        return Ok(cachedUrl);
     }
 }

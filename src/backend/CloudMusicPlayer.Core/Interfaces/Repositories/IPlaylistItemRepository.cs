@@ -6,5 +6,5 @@ public interface IPlaylistItemRepository
 {
     public Task AddAsync(PlaylistItem playlistItem, bool saveChanges);
 
-    public Task RemoveAsync(Guid playlistItemId, bool saveChanges);
+    public Task RemoveAsync(PlaylistItem playlistItem, bool saveChanges);
 }

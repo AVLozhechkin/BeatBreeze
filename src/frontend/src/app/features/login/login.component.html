@@ -1,18 +1,60 @@
-<div class="container mx-auto flex justify-center pt-10">
-  <form [formGroup]="loginFormGroup" class="w-1/2 flex justify-center flex-col gap-y-5">
-       <!--Email-->
-    <mat-form-field>
+<div class="container mx-auto flex flex-col items-center justify-center pt-10">
+  <h1>Log In to Cloud Music Player</h1>
+
+  <form [formGroup]="loginFormGroup" class="w-1/2 flex justify-center flex-col">
+
+    @switch (this.responseStatus()) {
+    @case('unauthorized') {
+    <div class="w-full p-2 my-3 bg-red-500 rounded">
+      Password or email must be incorrect
+    </div>
+    }
+    @case('serverError') {
+    <div class="w-full p-2 my-3 bg-red-500 rounded">
+      Something went wrong on our side. Please, reload page or come back later.
+    </div>
+    }
+    }
+
+    <!--Email-->
+    <mat-form-field class="py-3">
       <mat-label>Email</mat-label>
-      <input type="email" matInput formControlName="email"
-             placeholder="Ex. pat@example.com">
+      <input type="email" matInput formControlName="email" placeholder="Ex. pat@example.com">
+      @if (loginFormGroup.controls["email"].errors) {
+      <mat-error>
+        Please, provide a valid email
+      </mat-error>
+      }
     </mat-form-field>
+
     <!--Password-->
-    <mat-form-field>
+    <mat-form-field class="pt-3">
       <mat-label>Password</mat-label>
-      <input type="password" matInput formControlName="password"
-             placeholder="Password">
+      <input type="password" matInput formControlName="password" placeholder="Password">
+      @if (loginFormGroup.controls["password"].errors) {
+      <mat-error>
+        Please, provide a valid password
+      </mat-error>
+      }
     </mat-form-field>
+
+    <span class="w-full pb-5 flex justify-end">
+      <a routerLink="../password_recovery" class="text-purple-400">Forgot your password?</a>
+    </span>
+
     <!--Log in button-->
-    <button mat-flat-button color="primary" (click)="submit()">Log In</button>
+    <button mat-flat-button color="primary" (click)="submit()" [disabled]="this.responseStatus() === 'loading'">
+      @if (this.responseStatus() === 'loading') {
+      <div class="flex flex-row gap-x-5">
+        <span>Logging In</span>
+        <mat-spinner color="accent" diameter="{{20}}"></mat-spinner>
+      </div>
+      } @else {
+      Log In
+      }
+    </button>
   </form>
+  <div class="mt-8 text-lg">
+    <a class="mt-8" routerLink="../signup">Do not have an account? <span class="text-purple-400">Sign up</span></a>
+  </div>
 </div>

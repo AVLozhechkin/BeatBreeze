@@ -2,7 +2,7 @@
 
 namespace CloudMusicPlayer.Infrastructure.Services.Dropbox.Results;
 
-internal record TemporaryLinkResult
+internal sealed record TemporaryLinkResult
 {
     [JsonPropertyName("link")]
     public required string Link { get; set; }
