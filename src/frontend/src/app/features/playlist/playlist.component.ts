@@ -19,7 +19,7 @@ import { firstValueFrom } from 'rxjs';
 import { PlayerService2 } from 'src/app/core/services/player.service';
 
 @Component({
-  selector: 'cmp-playlist-table',
+  selector: 'ct-playlist-table',
   standalone: true,
   templateUrl: './playlist.component.html',
   imports: [

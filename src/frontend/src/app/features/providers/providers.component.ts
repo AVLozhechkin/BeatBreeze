@@ -16,7 +16,7 @@ import { ContentState } from '../../shared/models/content-state.enum';
 import { ProvidersTableComponent } from './providers-table/providers-table.component';
 
 @Component({
-  selector: 'cmp-providers',
+  selector: 'ct-providers',
   standalone: true,
   imports: [
     CommonModule,

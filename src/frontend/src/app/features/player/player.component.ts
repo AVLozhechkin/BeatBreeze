@@ -12,7 +12,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   standalone: true,
-  selector: 'cmp-player',
+  selector: 'ct-player',
   imports: [
     MatSliderModule,
     FormsModule,

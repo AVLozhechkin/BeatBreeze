@@ -4,7 +4,7 @@ import { AlertService } from 'src/app/core/services/alert.service';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
-  selector: 'cmp-alert',
+  selector: 'ct-alert',
   standalone: true,
   imports: [CommonModule],
   template: ``,

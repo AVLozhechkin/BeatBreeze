@@ -26,7 +26,7 @@ import { Playlist } from 'src/app/core/models/playlist.model';
 import { PlayerService2 } from 'src/app/core/services/player.service';
 
 @Component({
-  selector: 'cmp-provider-tree',
+  selector: 'ct-provider-tree',
   standalone: true,
   imports: [
     CommonModule,

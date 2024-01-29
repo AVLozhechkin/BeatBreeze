@@ -1,32 +1,32 @@
 version: "3"
 
 services:
-  cmp-nginx:
+  ct-nginx:
     build: ../src/nginx
     ports:
       - "80:80"
       - "443:443"
     depends_on:
-      - cmp-grafana
-      - cmp-redis-commander
-      - cmp-adminer
-      - cmp-seq
-      - cmp-api
+      - ct-grafana
+      - ct-redis-commander
+      - ct-adminer
+      - ct-seq
+      - ct-api
 
-  cmp-grafana:
+  ct-grafana:
     build: ../src/grafana
 
-  cmp-api:
+  ct-api:
     build:
-      dockerfile: src/backend/CloudMusicPlayer.API/Dockerfile
+      dockerfile: src/backend/CloudTunes.API/Dockerfile
       target: final
       context: ../
     restart: always
     ports:
       - "5229:5229"
     depends_on:
-      - cmp-redis
-      - cmp-postgres
+      - ct-redis
+      - ct-postgres
     environment:
       - ASPNETCORE_HTTP_PORTS=5229
       - Encryption__Secret=${Encryption_Secret}
@@ -35,23 +35,23 @@ services:
       - Dropbox__ClientId=${Dropbox_ClientId}
       - Dropbox__ClientSecret=${Dropbox_ClientSecret}
 
-  cmp-redis:
+  ct-redis:
     image: redis:latest
     restart: always
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-data:/data
 
-  cmp-redis-commander:
+  ct-redis-commander:
     image: rediscommander/redis-commander:latest
     environment:
-      - REDIS_HOSTS=local:cmp-redis:6379
+      - REDIS_HOSTS=local:ct-redis:6379
       - HTTP_USER=root
       - HTTP_PASSWORD=secret
     depends_on:
-      - cmp-redis
+      - ct-redis
 
-  cmp-postgres:
+  ct-postgres:
     image: postgres:latest
     restart: always
     environment:
@@ -60,11 +60,11 @@ services:
     volumes:
       - postgres-data:/data
 
-  cmp-adminer:
+  ct-adminer:
     image: adminer
     restart: always
 
-  cmp-seq:
+  ct-seq:
     image: datalust/seq
     environment:
       - ACCEPT_EULA=Y

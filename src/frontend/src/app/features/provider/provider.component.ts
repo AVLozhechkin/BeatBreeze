@@ -21,7 +21,7 @@ import { PlayerService2 } from 'src/app/core/services/player.service';
 import { MatButton, MatButtonModule } from '@angular/material/button';
 
 @Component({
-  selector: 'cmp-provider',
+  selector: 'ct-provider',
   standalone: true,
   templateUrl: './provider.component.html',
   imports: [

@@ -18,7 +18,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ResponseStatus } from 'src/app/shared/models/response-status.enum';
 
 @Component({
-  selector: 'cmp-login',
+  selector: 'ct-login',
   templateUrl: './login.component.html',
   standalone: true,
   imports: [

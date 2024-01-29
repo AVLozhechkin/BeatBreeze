@@ -1,14 +1,16 @@
-import {Injectable} from '@angular/core';
-import {User} from "../models/user.model";
+import { Injectable } from '@angular/core';
+import { User } from '../models/user.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LocalStorageService {
-  public static readonly userLocalStorageKey: string = 'CloudMusicPlayer_User';
+  public static readonly userLocalStorageKey: string = 'CloudTunes_User';
 
-  public getUser() : User | null {
-    const json = window.localStorage.getItem(LocalStorageService.userLocalStorageKey);
+  public getUser(): User | null {
+    const json = window.localStorage.getItem(
+      LocalStorageService.userLocalStorageKey
+    );
 
     if (json === null) {
       return null;
@@ -18,7 +20,10 @@ export class LocalStorageService {
   }
 
   public saveUser(user: User) {
-    window.localStorage.setItem(LocalStorageService.userLocalStorageKey, JSON.stringify(user));
+    window.localStorage.setItem(
+      LocalStorageService.userLocalStorageKey,
+      JSON.stringify(user)
+    );
   }
 
   public deleteUser() {

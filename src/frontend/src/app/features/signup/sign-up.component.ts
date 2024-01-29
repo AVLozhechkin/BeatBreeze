@@ -20,7 +20,7 @@ import { ResponseStatus } from 'src/app/shared/models/response-status.enum';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'cmp-sign-up',
+  selector: 'ct-sign-up',
   templateUrl: './sign-up.component.html',
   standalone: true,
   imports: [

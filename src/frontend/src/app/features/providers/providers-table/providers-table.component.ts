@@ -5,7 +5,7 @@ import { MatTableModule } from '@angular/material/table';
 import { ProvidersService } from '../providers.service';
 
 @Component({
-  selector: 'cmp-providers-table',
+  selector: 'ct-providers-table',
   standalone: true,
   imports: [CommonModule, ButtonGroupComponent, MatTableModule],
   templateUrl: './providers-table.component.html',

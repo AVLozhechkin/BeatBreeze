@@ -12,14 +12,14 @@ import { AlertComponent } from './shared/components/alert/alert.component';
 
 @Component({
   standalone: true,
-  selector: 'cmp-root',
+  selector: 'ct-root',
   template: `
-    <cmp-header></cmp-header>
+    <ct-header></ct-header>
     <div class="pb-36">
       <router-outlet></router-outlet>
     </div>
-    <cmp-alert></cmp-alert>
-    <cmp-player></cmp-player>
+    <ct-alert></ct-alert>
+    <ct-player></ct-player>
   `,
   imports: [PlayerComponent, HeaderComponent, RouterOutlet, AlertComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -6,7 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { PlayerService2 } from 'src/app/core/services/player.service';
 
 @Component({
-  selector: 'cmp-header',
+  selector: 'ct-header',
   standalone: true,
   imports: [CommonModule, RouterModule, MatButtonModule],
   templateUrl: './header.component.html',

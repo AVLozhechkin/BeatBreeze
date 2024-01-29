@@ -13,14 +13,14 @@
     </div>
     <div class="flex gap-x-2">
       <button mat-flat-button (click)="playAll()">Play all songs</button>
-      <cmp-active-button color="accent" text="Update" [isLoading]="isUpdating()"
-        [disabled]="isRemoving() || isUpdating()" (click)="update()"></cmp-active-button>
-      <cmp-active-button color="warn" text="Remove" [isLoading]="isRemoving()" [disabled]="isRemoving() || isUpdating()"
-        (click)="remove()"></cmp-active-button>
+      <ct-active-button color="accent" text="Update" [isLoading]="isUpdating()"
+        [disabled]="isRemoving() || isUpdating()" (click)="update()"></ct-active-button>
+      <ct-active-button color="warn" text="Remove" [isLoading]="isRemoving()" [disabled]="isRemoving() || isUpdating()"
+        (click)="remove()"></ct-active-button>
     </div>
   </div>
 
-  <cmp-provider-tree [provider]="this.provider!" [playlists]="this.playlists!"></cmp-provider-tree>
+  <ct-provider-tree [provider]="this.provider!" [playlists]="this.playlists!"></ct-provider-tree>
 </div>
 }
 @default {

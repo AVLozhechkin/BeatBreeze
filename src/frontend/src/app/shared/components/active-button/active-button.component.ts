@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'cmp-active-button',
+  selector: 'ct-active-button',
   standalone: true,
   imports: [
     CommonModule,

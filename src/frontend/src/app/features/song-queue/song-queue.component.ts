@@ -13,7 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MusicFile } from 'src/app/core/models/musicFile.model';
 
 @Component({
-  selector: 'cmp-song-queue',
+  selector: 'ct-song-queue',
   standalone: true,
   imports: [CommonModule, MatTableModule, MatButtonModule, MatIconModule],
   templateUrl: './song-queue.component.html',

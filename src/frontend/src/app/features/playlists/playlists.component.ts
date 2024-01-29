@@ -19,7 +19,7 @@ import { CreatePlaylistDialogComponent } from './create-playlist-dialog/create-p
 import { PlaylistsButtonsComponent } from './playlists-buttons/playlists-buttons.component';
 
 @Component({
-  selector: 'cmp-playlists',
+  selector: 'ct-playlists',
   standalone: true,
   templateUrl: './playlists.component.html',
   imports: [

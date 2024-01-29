@@ -14,7 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { PlayerService2 } from 'src/app/core/services/player.service';
 
 @Component({
-  selector: 'cmp-playlists-buttons',
+  selector: 'ct-playlists-buttons',
   standalone: true,
   templateUrl: './playlists-buttons.component.html',
   imports: [CommonModule, MatButtonModule, ActiveButtonComponent, RouterModule],

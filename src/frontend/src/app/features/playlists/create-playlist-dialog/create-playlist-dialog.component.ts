@@ -14,7 +14,7 @@ import {
 import { ResponseStatus } from 'src/app/shared/models/response-status.enum';
 
 @Component({
-  selector: 'cmp-create-playlist-dialog',
+  selector: 'ct-create-playlist-dialog',
   standalone: true,
   templateUrl: './create-playlist-dialog.component.html',
   imports: [

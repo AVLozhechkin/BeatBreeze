@@ -4,12 +4,12 @@
     <button mat-flat-button color="primary" class="z-0" [routerLink]="playlist.id">View</button>
   </div>
   <div class="flex justify-center">
-    <cmp-active-button color="accent" text="Play" [isLoading]="isEnquing()" [disabled]="isEnquing() || isDeleting()"
-      (click)="play()"></cmp-active-button>
+    <ct-active-button color="accent" text="Play" [isLoading]="isEnquing()" [disabled]="isEnquing() || isDeleting()"
+      (click)="play()"></ct-active-button>
   </div>
   <div class="flex justify-center">
-    <cmp-active-button color="warn" text="Delete" [isLoading]="isDeleting()" [disabled]="isEnquing() || isDeleting()"
-      (click)="deletePlaylist()"></cmp-active-button>
+    <ct-active-button color="warn" text="Delete" [isLoading]="isDeleting()" [disabled]="isEnquing() || isDeleting()"
+      (click)="deletePlaylist()"></ct-active-button>
   </div>
 </div>
 } @else {
@@ -18,8 +18,8 @@
     <button mat-flat-button color="primary" class="z-0" [routerLink]="playlist.id">View</button>
   </div>
   <div class="basis-1/3 flex justify-center">
-    <cmp-active-button color="warn" text="Delete" [isLoading]="isDeleting()" [disabled]="isEnquing() || isDeleting()"
-      (click)="deletePlaylist()"></cmp-active-button>
+    <ct-active-button color="warn" text="Delete" [isLoading]="isDeleting()" [disabled]="isEnquing() || isDeleting()"
+      (click)="deletePlaylist()"></ct-active-button>
   </div>
 </div>
 }

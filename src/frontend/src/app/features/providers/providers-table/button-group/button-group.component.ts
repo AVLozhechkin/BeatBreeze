@@ -15,7 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ActiveButtonComponent } from '../../../../shared/components/active-button/active-button.component';
 
 @Component({
-  selector: 'cmp-button-group',
+  selector: 'ct-button-group',
   standalone: true,
   templateUrl: './button-group.component.html',
   imports: [

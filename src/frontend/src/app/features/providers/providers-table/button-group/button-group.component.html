@@ -1,7 +1,7 @@
 <div class="flex justify-around">
   <button mat-flat-button color="primary" [routerLink]="provider.id" [disabled]="isRemoving()">View</button>
-  <cmp-active-button color="accent" text="Update" (click)="updateProvider()" [isLoading]="isUpdating()"
-    [disabled]="isRemoving() || isUpdating()"></cmp-active-button>
-  <cmp-active-button color="warn" text="Remove" (click)="removeProvider()" [isLoading]="isRemoving()"
-    [disabled]="isRemoving() || isUpdating()"></cmp-active-button>
+  <ct-active-button color="accent" text="Update" (click)="updateProvider()" [isLoading]="isUpdating()"
+    [disabled]="isRemoving() || isUpdating()"></ct-active-button>
+  <ct-active-button color="warn" text="Remove" (click)="removeProvider()" [isLoading]="isRemoving()"
+    [disabled]="isRemoving() || isUpdating()"></ct-active-button>
 </div>

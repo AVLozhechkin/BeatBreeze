@@ -11,7 +11,7 @@ import { ActiveButtonComponent } from 'src/app/shared/components/active-button/a
 import { PlaylistService } from '../playlist.service';
 
 @Component({
-  selector: 'cmp-playlist-item-buttons',
+  selector: 'ct-playlist-item-buttons',
   standalone: true,
   imports: [CommonModule, ActiveButtonComponent],
   templateUrl: './playlist-item-buttons.component.html',
