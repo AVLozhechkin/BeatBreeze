@@ -4,6 +4,7 @@ using CloudTunes.API.Exceptions.Handlers;
 using CloudTunes.API.Services;
 using CloudTunes.Core.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.ResponseCompression;
 using OpenTelemetry.Metrics;
@@ -14,6 +15,7 @@ public static class DependencyInjectionExtensions
 {
     public static IServiceCollection AddApiLayer(this IServiceCollection services, ConfigurationManager configuration)
     {
+        services.SetupReverseProxyForwarding();
         services.SetupCaching(configuration);
         services.SetupHttpClients();
         services.SetupExceptionHandling();
@@ -25,6 +27,14 @@ public static class DependencyInjectionExtensions
         services.SetupMetrics();
 
         return services;
+    }
+
+    private static void SetupReverseProxyForwarding(this IServiceCollection services)
+    {
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        });
     }
 
     private static void SetupMetrics(this IServiceCollection services)
