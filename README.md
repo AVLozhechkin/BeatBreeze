@@ -14,7 +14,7 @@ ASP.NET Core + Angular music player for music from Yandex.Disk/Dropbox (and Goog
 
 - Пока что тесты отменяются, так как требования к проекту генерируются в режиме реального времени.
 - Есть возможность локального запуска без Postgres и Redis (заменяется на SQLite и InMemoryCache)
-- Добавлен простой сбор метрик (Prometheus и экспортеры для Redis/Postgres/API/Node/Nginx), но требуется более детальная настройка.
+- Добавлен простой сбор метрик (Prometheus и экспортеры для Redis/Postgres/Node/Nginx), но требуется более детальная настройка.
 - Настроен docker-compose и Nginx в качестве reverse-proxy для доступа к API/Seq/Grafana/Prometheus.
 
 # Проект в картинках

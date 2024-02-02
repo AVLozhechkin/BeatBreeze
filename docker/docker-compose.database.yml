@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  ct-postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=${Postgres_Username}
+      - POSTGRES_PASSWORD=${Postgres_Password}
+    volumes:
+      - postgres-data:/data
+
+  # https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
+  ct-pgAdmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PgAdminDefaultEmail}
+      - PGADMIN_DEFAULT_PASSWORD=${PgAdminDefaultPassword}
+
+volumes:
+  postgres-data:

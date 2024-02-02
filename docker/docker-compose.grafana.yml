@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  ct-grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SERVER_DOMAIN=localhost
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_SECURITY_DATA_SOURCE_PROXY_WHITELIST=http://ct-prometheus:9090
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_NAME}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}

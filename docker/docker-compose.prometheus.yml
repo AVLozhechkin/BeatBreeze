@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  ct-prometheus:
+    image: prom/prometheus
+    volumes:
+      - prometheus-data:/data
+      - "../src/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.external-url=/prometheus/"
+      - "--web.route-prefix=/"
+
+  # https://github.com/prometheus/node_exporter
+  ct-node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    command:
+      - "--path.rootfs=/host"
+    restart: unless-stopped
+
+  # https://github.com/prometheus-community/postgres_exporter
+  ct-postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME="postgresql://${Postgres_Username}:${Postgres_Password}@${ct-postgres}:5432/postgres?sslmode=disable"
+
+  ct-redis-exporter:
+    image: oliver006/redis_exporter:alpine
+    environment:
+      - REDIS_ADDR=redis://ct-redis:6379
+
+  ct-nginx-exporter:
+    image: nginx/nginx-prometheus-exporter
+    command:
+      - -nginx.scrape-uri
+      - http://ct-nginx/stub_status
+
+volumes:
+  prometheus-data:

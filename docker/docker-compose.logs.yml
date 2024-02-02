@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  ct-seq:
+    image: datalust/seq
+    restart: always
+    environment:
+      - ACCEPT_EULA=Y
+      - BASE_URI=http://localhost/logs/
+      - SEQ_FIRSTRUN_ADMINUSERNAME=${Seq_Username}
+      - SEQ_FIRSTRUN_ADMINPASSWORDHASH=${Seq_PasswordHash}
+    volumes:
+      - seq-data:/data
+
+volumes:
+  seq-data:

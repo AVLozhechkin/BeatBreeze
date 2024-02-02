@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  ct-redis:
+    image: redis:alpine
+    restart: always
+    command: ["redis-server", "--maxmemory", "300mb"]
+
+  ct-redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:ct-redis:6379
+      - HTTP_USER=${Redis_Commander_Login}
+      - HTTP_PASSWORD=${Redis_Commander_Password}
+    depends_on:
+      - ct-redis

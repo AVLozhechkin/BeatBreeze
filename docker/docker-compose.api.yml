@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  ct-api:
+    build:
+      dockerfile: src/backend/CloudTunes.API/Dockerfile
+      target: final
+      context: ../
+    restart: always
+    ports:
+      - "5229:5229"
+    depends_on:
+      - ct-redis
+      - ct-postgres
+    environment:
+      - ASPNETCORE_HTTP_PORTS=5229
+      - ConnectionStrings__Postgres=${ConnectionStrings_Postgres}
+      - ConnectionStrings__Redis=${ConnectionStrings_Redis}
+      - Encryption__Secret=${Encryption_Secret}
+      - Yandex__ClientId=${Yandex_ClientId}
+      - Yandex__ClientSecret=${Yandex_ClientSecret}
+      - Dropbox__ClientId=${Dropbox_ClientId}
+      - Dropbox__ClientSecret=${Dropbox_ClientSecret}

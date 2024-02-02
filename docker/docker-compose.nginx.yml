@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  ct-nginx:
+    container_name: cloud-tunes-nginx
+    build: ../src/nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - ct-grafana
+      - ct-redis-commander
+      - ct-seq
+      - ct-api

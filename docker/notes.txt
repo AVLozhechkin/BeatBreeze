@@ -1,0 +1,1 @@
+Docker compose command: docker-compose -f docker-compose.api.yml -f docker-compose.cache.yml -f docker-compose.database.yml -f docker-compose.grafana.yml -f docker-compose.logs.yml -f docker-compose.nginx.yml -f docker-compose.prometheus.yml up
