@@ -14,8 +14,8 @@ services:
       - ct-postgres
     environment:
       - ASPNETCORE_HTTP_PORTS=5229
-      - ConnectionStrings__Postgres=${ConnectionStrings_Postgres}
-      - ConnectionStrings__Redis=${ConnectionStrings_Redis}
+      - ConnectionStrings__PostgresDb=${ConnectionStrings_PostgresDb}
+      - ConnectionStrings__RedisCache=${ConnectionStrings_RedisCache}
       - Encryption__Secret=${Encryption_Secret}
       - Yandex__ClientId=${Yandex_ClientId}
       - Yandex__ClientSecret=${Yandex_ClientSecret}

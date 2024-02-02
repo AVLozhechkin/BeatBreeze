@@ -22,7 +22,7 @@ services:
   ct-postgres-exporter:
     image: quay.io/prometheuscommunity/postgres-exporter
     environment:
-      - DATA_SOURCE_NAME="postgresql://${Postgres_Username}:${Postgres_Password}@${ct-postgres}:5432/postgres?sslmode=disable"
+      - DATA_SOURCE_NAME=postgresql://${Postgres_Username}:${Postgres_Password}@ct-postgres:5432/postgres?sslmode=disable
 
   ct-redis-exporter:
     image: oliver006/redis_exporter:alpine
