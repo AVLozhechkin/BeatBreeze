@@ -1,9 +1,11 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { User } from '../models/user.model';
-import { tap } from 'rxjs';
+import { catchError, tap, throwError } from 'rxjs';
 import { AuthApiClient } from './api/auth-api-client';
 import { UsersApiClient } from './api/users-api-client';
 import { LocalStorageService } from './local-storage.service';
+import { CookieService } from './cookie.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +15,7 @@ export class AuthService {
   private usersApiClient: UsersApiClient = inject(UsersApiClient);
   private localStorageService: LocalStorageService =
     inject(LocalStorageService);
+  private cookieService = inject(CookieService);
 
   private readonly _user = signal<User | undefined | null>(undefined);
   public readonly user = this._user.asReadonly();
@@ -40,7 +43,10 @@ export class AuthService {
 
   refresh() {
     // check if we have a cookie. If not then we are not authenticated
-    if (!document.cookie) {
+
+    const cookie = this.cookieService.getAppCookie();
+
+    if (!cookie) {
       this._user.set(undefined);
       return;
     }
@@ -54,9 +60,18 @@ export class AuthService {
     }
 
     // Todo SET EVERYTHING TO NULL
-    return this.usersApiClient
-      .getCurrentUser()
-      .pipe(tap((user) => this.setUser(user)));
+    return this.usersApiClient.getCurrentUser().pipe(
+      catchError((err: HttpErrorResponse, _) => {
+        if (err.status === 401) {
+          this._user.set(undefined);
+          document.cookie = '';
+          this.localStorageService.deleteUser();
+        }
+
+        return throwError(() => err);
+      }),
+      tap((user) => this.setUser(user))
+    );
   }
 
   private setUser(user: User) {

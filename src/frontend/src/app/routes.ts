@@ -1,6 +1,13 @@
 import { Routes } from '@angular/router';
+import { queueGuard } from './shared/guards/queue.guard';
+import { authGuard } from './shared/guards/auth.guard';
 
 export const DEFAULT_ROUTES: Routes = [
+  {
+    path: '',
+    redirectTo: 'providers',
+    pathMatch: 'full',
+  },
   {
     path: 'login',
     loadComponent: () =>
@@ -19,11 +26,13 @@ export const DEFAULT_ROUTES: Routes = [
       import('./features/song-queue/song-queue.component').then(
         (c) => c.SongQueueComponent
       ),
+    canActivate: [queueGuard],
   },
   {
     path: 'providers',
     loadChildren: () => PROVIDER_ROUTES,
     title: 'Providers',
+    canActivate: [authGuard],
   },
   {
     path: 'playlists',

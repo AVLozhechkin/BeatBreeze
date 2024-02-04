@@ -16,7 +16,6 @@ export class ProviderService {
   public fetchProvider(providerId: string, includeFiles: boolean) {
     return this.providersApiClient.getProvider(providerId, includeFiles).pipe(
       tap((provider) => {
-        console.log(provider);
         this._provider.next(provider);
       })
     );

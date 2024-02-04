@@ -75,7 +75,6 @@ export class PlayerService2 implements OnDestroy {
   }
 
   async setSongs(files: MusicFile[], index: number = 0) {
-    console.log(files);
     if (index < 0 || files.length <= index) {
       throw new Error(
         'Index cant be less than zero or more than playlist size'

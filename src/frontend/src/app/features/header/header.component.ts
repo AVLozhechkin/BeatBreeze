@@ -20,7 +20,7 @@ export class HeaderComponent {
   signOut() {
     this.authService.logout().subscribe({
       complete: () => {
-        this.router.navigate(['login']);
+        location.reload();
       },
     });
   }
