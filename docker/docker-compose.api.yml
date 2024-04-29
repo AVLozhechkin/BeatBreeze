@@ -3,7 +3,7 @@ version: "3.8"
 services:
   ct-api:
     build:
-      dockerfile: src/backend/CloudTunes.API/Dockerfile
+      dockerfile: src/backend/BeatBreeze.API/Dockerfile
       target: final
       context: ../
     restart: always

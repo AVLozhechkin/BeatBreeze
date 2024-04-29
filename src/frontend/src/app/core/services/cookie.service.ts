@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class CookieService {
-  private readonly AppCookieName = 'CloudTunes';
+  private readonly AppCookieName = 'BeatBreeze';
 
   getAppCookie() {
     const value = `; ${document.cookie}`;

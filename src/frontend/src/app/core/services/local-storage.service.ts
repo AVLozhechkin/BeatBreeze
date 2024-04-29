@@ -5,7 +5,7 @@ import { User } from '../models/user.model';
   providedIn: 'root',
 })
 export class LocalStorageService {
-  public static readonly userLocalStorageKey: string = 'CloudTunes_User';
+  public static readonly userLocalStorageKey: string = 'BeatBreeze_User';
 
   public getUser(): User | null {
     const json = window.localStorage.getItem(

@@ -1,4 +1,4 @@
-# CloudTunes
+# BeatBreeze
 
 ASP.NET Core + Angular music player for music from Yandex.Disk/Dropbox (and Google Drive later)
 
